@@ -682,19 +682,31 @@ function handleFile(file) {
       try {
         const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
         if (data.length < 2) return showToast('El archivo está vacío', 'err');
 
-        // Get headers and rows
-        importColumns = data[0].map((h, i) => h || `Columna ${i+1}`);
-        importedRows = data.slice(1).filter(r => r.some(c => c !== ''));
+        // Find the actual header row — look for a row with 3+ non-empty cells
+        // that doesn't look like a title (titles are usually merged/single cell)
+        let headerRowIdx = 0;
+        for (let i = 0; i < Math.min(10, data.length); i++) {
+          const nonEmpty = data[i].filter(c => c !== '' && c !== null && c !== undefined).length;
+          if (nonEmpty >= 3) { headerRowIdx = i; break; }
+        }
+
+        importColumns = data[headerRowIdx].map((h, i) => String(h||'').trim() || `Columna ${i+1}`);
+        // Only keep rows after header that have at least 2 non-empty cells
+        importedRows = data.slice(headerRowIdx + 1).filter(r => 
+          r.filter(c => c !== '' && c !== null && c !== undefined).length >= 2
+        );
+
+        if (importedRows.length === 0) return showToast('No se encontraron datos en el archivo', 'err');
 
         renderColumnMapper();
-        renderPreview(data.slice(0, 4));
+        renderPreview([data[headerRowIdx], ...data.slice(headerRowIdx+1, headerRowIdx+4)]);
         document.getElementById('importStep1').style.display = 'none';
         document.getElementById('importStep2').style.display = 'block';
       } catch(err) {
-        showToast('Error al leer el archivo', 'err');
+        showToast('Error al leer el archivo: ' + err.message, 'err');
       }
     };
     reader.readAsArrayBuffer(file);
@@ -756,24 +768,32 @@ function parseDate(val) {
   if (!val) return null;
   if (val instanceof Date) return val.toISOString().split('T')[0];
   const s = String(val).trim();
-  // Try common formats
-  const patterns = [
-    /^(\d{4})-(\d{1,2})-(\d{1,2})/, // 2024-01-15
-    /^(\d{1,2})\/(\d{1,2})\/(\d{4})/, // 15/01/2024
-    /^(\d{1,2})-(\d{1,2})-(\d{4})/, // 15-01-2024
-  ];
-  for (const p of patterns) {
-    const m = s.match(p);
-    if (m) {
-      if (p.source.startsWith('^(\d{4})')) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
-      return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-    }
+  if (!s || s === '') return null;
+
+  // Already in YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+
+  // DD/MM/YYYY or MM/DD/YYYY
+  const slashMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (slashMatch) {
+    const [_, a, b, y] = slashMatch;
+    // If first number > 12, it must be DD
+    const day = parseInt(a) > 12 ? a : b;
+    const month = parseInt(a) > 12 ? b : a;
+    return `${y}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
   }
-  // Excel serial number
-  if (!isNaN(val)) {
-    const d = new Date((val - 25569) * 86400 * 1000);
-    return d.toISOString().split('T')[0];
+
+  // DD-MM-YYYY
+  const dashMatch = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+  if (dashMatch) {
+    const [_, d, m, y] = dashMatch;
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
   }
+
+  // Try native Date parse
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+
   return null;
 }
 
