@@ -1558,8 +1558,14 @@ function updateRptPreview() {
 }
 
 async function generarPDF() {
-  const { jsPDF } = window.jspdf;
-  if (!jsPDF) return showToast('Cargando librería PDF, intenta en 2 segundos', 'err');
+  // Wait for jsPDF to load (max 5 seconds)
+  let attempts = 0;
+  while (!window.jspdf?.jsPDF && attempts < 20) {
+    await new Promise(r => setTimeout(r, 250));
+    attempts++;
+  }
+  const { jsPDF } = window.jspdf || {};
+  if (!jsPDF) return showToast('Error al cargar el generador de PDF. Recarga la página e intenta de nuevo.', 'err');
 
   const btn = document.getElementById('btnPDF');
   btn.disabled = true; btn.textContent = '⏳ Generando...';
