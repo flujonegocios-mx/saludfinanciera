@@ -253,6 +253,7 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
         <button class="nav-item" onclick="showPage('pl',this)"><span class="nav-icon">📋</span>Estado de Resultados</button>
         <button class="nav-item" onclick="showPage('historial',this)"><span class="nav-icon">🧾</span>Historial</button>
         <button class="nav-item" onclick="showPage('importar',this)"><span class="nav-icon">📥</span>Importar Excel</button>
+        <button class="nav-item" onclick="showPage('insights',this)"><span class="nav-icon">✨</span>Insights IA</button>
       </nav>
     </div>
     <div>
@@ -381,6 +382,45 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
           <div class="card-title" style="font-size:1.1rem;margin-bottom:0.5rem">¡Importación completa!</div>
           <div id="importSummary" style="color:var(--ink-muted);font-size:0.85rem;margin-bottom:1.5rem"></div>
           <button class="btn-submit" style="margin-top:0;max-width:200px;margin:0 auto" onclick="goToDashboard()">Ver Dashboard →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="page" id="page-insights">
+      <div class="topbar">
+        <div>
+          <div class="page-title">✨ Insights IA</div>
+          <div class="page-subtitle">Análisis automático de tus finanzas con inteligencia artificial</div>
+        </div>
+        <button class="btn-submit" id="btnAnalizar" onclick="generarInsights()" style="margin-top:0;width:auto;padding:0.6rem 1.4rem;font-size:0.85rem">
+          ✨ Analizar mis finanzas
+        </button>
+      </div>
+
+      <!-- Empty state -->
+      <div id="insightsEmpty" class="card" style="text-align:center;padding:3rem 2rem;max-width:500px">
+        <div style="font-size:3rem;margin-bottom:1rem">🔍</div>
+        <div style="font-weight:700;font-size:1.05rem;margin-bottom:0.5rem">Listo para analizar</div>
+        <div style="color:var(--ink-muted);font-size:0.85rem;margin-bottom:1.5rem">Presiona el botón para que la IA analice tus datos y te dé recomendaciones personalizadas.</div>
+        <button onclick="generarInsights()" class="btn-submit" style="margin-top:0;max-width:220px;margin:0 auto">✨ Analizar mis finanzas</button>
+      </div>
+
+      <!-- Loading -->
+      <div id="insightsLoading" style="display:none;text-align:center;padding:3rem">
+        <div class="spinner" style="margin:0 auto 1rem;border-top-color:var(--accent)"></div>
+        <div style="color:var(--ink-muted);font-size:0.85rem">Analizando tus datos financieros...</div>
+      </div>
+
+      <!-- Results -->
+      <div id="insightsResult" style="display:none">
+        <!-- Summary bar -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.25rem" id="insightKpis"></div>
+        <!-- Insight cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem" id="insightCards"></div>
+        <!-- Regenerate -->
+        <div style="text-align:center;margin-top:1.5rem">
+          <button onclick="generarInsights()" style="padding:0.5rem 1.25rem;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);font-family:'Instrument Sans',sans-serif;font-size:0.82rem;cursor:pointer;color:var(--ink-muted)">🔄 Volver a analizar</button>
         </div>
       </div>
     </div>
@@ -647,6 +687,7 @@ function showPage(page,btn) {
   document.getElementById(`page-${page}`).classList.add('active'); btn.classList.add('active');
   if(page==='pl')renderPL(S.plMonth);
   if(page==='historial')renderHistorial();
+
 }
 
 function showToast(msg,type='') { const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast show ${type}`; setTimeout(()=>t.classList.remove('show'),2800); }
@@ -863,6 +904,141 @@ function goToDashboard() {
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-dashboard').classList.add('active');
   document.querySelector('.nav-item').classList.add('active');
+}
+
+
+
+// ── INSIGHTS IA ──────────────────────────────────────────
+async function generarInsights() {
+  if (S.transactions.length === 0) return showToast('Primero registra algunos movimientos', 'err');
+
+  document.getElementById('insightsEmpty').style.display = 'none';
+  document.getElementById('insightsResult').style.display = 'none';
+  document.getElementById('insightsLoading').style.display = 'block';
+  document.getElementById('btnAnalizar').disabled = true;
+
+  // Build financial data
+  const txs = S.transactions;
+  const ing = txs.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const gas = txs.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+  const util = ing - gas;
+  const margen = ing > 0 ? (util/ing*100) : 0;
+
+  // Monthly
+  const monthly = {};
+  txs.forEach(t => {
+    const ym = t.fecha.substring(0,7);
+    if (!monthly[ym]) monthly[ym] = {ing:0, gas:0};
+    monthly[ym][t.tipo==='ingreso'?'ing':'gas'] += t.monto;
+  });
+  const months = Object.entries(monthly).sort();
+
+  // Categories
+  const cats = {};
+  txs.filter(t=>t.tipo==='gasto').forEach(t => {
+    const k = t.categoria||'otro';
+    cats[k] = (cats[k]||0) + t.monto;
+  });
+  const topCats = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  const biz = S.businesses.find(b=>b.id===S.activeBizId);
+
+  const prompt = `Analiza los siguientes datos financieros de una pequeña empresa mexicana llamada "${biz?.name||'el negocio'}" y genera exactamente 5 insights en formato JSON.
+
+DATOS:
+- Ingresos totales: $${ing.toLocaleString('es-MX')}
+- Gastos totales: $${gas.toLocaleString('es-MX')}
+- Utilidad neta: $${util.toLocaleString('es-MX')}
+- Margen de utilidad: ${margen.toFixed(1)}%
+- Total movimientos: ${txs.length}
+
+RESUMEN MENSUAL:
+${months.map(([m,v])=>`${m}: Ingresos $${v.ing.toLocaleString('es-MX')} | Gastos $${v.gas.toLocaleString('es-MX')}`).join('
+')}
+
+TOP CATEGORÍAS DE GASTO:
+${topCats.map(([k,v])=>`${k}: $${v.toLocaleString('es-MX')} (${(v/gas*100).toFixed(1)}%)`).join('
+')}
+
+Responde SOLO con un JSON válido, sin texto adicional, con esta estructura exacta:
+{
+  "insights": [
+    {
+      "tipo": "positivo|negativo|neutro|alerta",
+      "icono": "emoji",
+      "titulo": "título corto max 8 palabras",
+      "descripcion": "explicación de 2-3 oraciones con números concretos",
+      "recomendacion": "acción concreta que puede tomar"
+    }
+  ]
+}
+
+Los tipos significan: positivo=buena noticia, negativo=problema detectado, alerta=advertencia, neutro=observación.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+
+    // Render KPIs
+    const kpiColors = [
+      {label:'Ingresos', val:fmt(ing), color:'var(--green)', icon:'💰'},
+      {label:'Gastos', val:fmt(gas), color:'var(--red)', icon:'📤'},
+      {label:'Utilidad', val:fmt(util), color:util>=0?'var(--green)':'var(--red)', icon:'📈'},
+      {label:'Margen', val:margen.toFixed(1)+'%', color:'var(--gold)', icon:'🎯'},
+    ];
+    document.getElementById('insightKpis').innerHTML = kpiColors.map(k=>`
+      <div class="kpi-card">
+        <div class="kpi-top"><div class="kpi-label">${k.label}</div><div class="kpi-icon">${k.icon}</div></div>
+        <div class="kpi-value" style="color:${k.color}">${k.val}</div>
+      </div>`).join('');
+
+    // Render insight cards
+    const colorMap = {
+      positivo: {bg:'var(--green-bg)', border:'#a8d5b5', badge:'#1e7a45', label:'✅ Positivo'},
+      negativo: {bg:'var(--red-bg)', border:'#f0b8b0', badge:'var(--red)', label:'⚠️ Atención'},
+      alerta: {bg:'var(--gold-bg)', border:'#f0d890', badge:'var(--gold)', label:'🔔 Alerta'},
+      neutro: {bg:'var(--blue-bg)', border:'#b0c8f0', badge:'var(--blue)', label:'💡 Dato'},
+    };
+    document.getElementById('insightCards').innerHTML = parsed.insights.map(ins => {
+      const c = colorMap[ins.tipo] || colorMap.neutro;
+      return `
+        <div style="background:${c.bg};border:1.5px solid ${c.border};border-radius:14px;padding:1.25rem">
+          <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.75rem">
+            <span style="font-size:1.6rem">${ins.icono}</span>
+            <div>
+              <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${c.badge};margin-bottom:0.15rem">${c.label}</div>
+              <div style="font-weight:700;font-size:0.92rem;line-height:1.3">${ins.titulo}</div>
+            </div>
+          </div>
+          <div style="font-size:0.82rem;color:var(--ink);line-height:1.6;margin-bottom:0.75rem">${ins.descripcion}</div>
+          <div style="font-size:0.78rem;padding:0.5rem 0.75rem;background:rgba(255,255,255,0.6);border-radius:8px;color:var(--ink-muted);line-height:1.5">
+            <strong>💡 Recomendación:</strong> ${ins.recomendacion}
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('insightsLoading').style.display = 'none';
+    document.getElementById('insightsResult').style.display = 'block';
+
+  } catch(err) {
+    document.getElementById('insightsLoading').style.display = 'none';
+    document.getElementById('insightsEmpty').style.display = 'block';
+    showToast('Error al generar insights, intenta de nuevo', 'err');
+  }
+
+  document.getElementById('btnAnalizar').disabled = false;
 }
 
 init();
