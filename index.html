@@ -254,6 +254,7 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
         <button class="nav-item" onclick="showPage('historial',this)"><span class="nav-icon">🧾</span>Historial</button>
         <button class="nav-item" onclick="showPage('importar',this)"><span class="nav-icon">📥</span>Importar Excel</button>
         <button class="nav-item" onclick="showPage('insights',this)"><span class="nav-icon">✨</span>Insights IA</button>
+        <button class="nav-item" onclick="showPage('forecast',this)"><span class="nav-icon">🔮</span>Forecast</button>
       </nav>
     </div>
     <div>
@@ -421,6 +422,88 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
         <!-- Regenerate -->
         <div style="text-align:center;margin-top:1.5rem">
           <button onclick="generarInsights()" style="padding:0.5rem 1.25rem;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);font-family:'Instrument Sans',sans-serif;font-size:0.82rem;cursor:pointer;color:var(--ink-muted)">🔄 Volver a analizar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forecast -->
+    <div class="page" id="page-forecast">
+      <div class="topbar">
+        <div>
+          <div class="page-title">🔮 Forecast Financiero</div>
+          <div class="page-subtitle">Proyección de los próximos 3 meses basada en tu historial</div>
+        </div>
+        <button class="btn-submit" id="btnForecast" onclick="generarForecast()" style="margin-top:0;width:auto;padding:0.6rem 1.4rem;font-size:0.85rem">
+          🔮 Generar proyección
+        </button>
+      </div>
+
+      <!-- Explicación -->
+      <div class="card" style="background:var(--blue-bg);border:1.5px solid #b0c8f0;margin-bottom:1.25rem">
+        <div style="display:flex;gap:1rem;align-items:flex-start">
+          <div style="font-size:1.8rem;flex-shrink:0">💡</div>
+          <div>
+            <div style="font-weight:700;font-size:0.92rem;margin-bottom:0.4rem;color:var(--blue)">¿Cómo funciona el Forecast?</div>
+            <div style="font-size:0.82rem;color:var(--ink);line-height:1.7">
+              El sistema analiza tu <strong>historial de ingresos y gastos</strong> de los últimos meses y calcula tu tendencia de crecimiento. 
+              Con esa tendencia, proyecta cómo se verán tus finanzas en los <strong>próximos 3 meses</strong>.<br><br>
+              Por ejemplo, si tus ingresos han crecido un 8% cada mes, el forecast asume que ese ritmo continuará.
+              <strong>No es una promesa</strong> — es una proyección basada en tu comportamiento actual para ayudarte a planear mejor.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="forecastEmpty" class="card" style="text-align:center;padding:3rem 2rem;max-width:500px">
+        <div style="font-size:3rem;margin-bottom:1rem">🔮</div>
+        <div style="font-weight:700;font-size:1.05rem;margin-bottom:0.5rem">Proyecta tu futuro financiero</div>
+        <div style="color:var(--ink-muted);font-size:0.85rem;margin-bottom:1.5rem">Necesitas al menos 2 meses de datos para generar una proyección confiable.</div>
+        <button onclick="generarForecast()" class="btn-submit" style="margin-top:0;max-width:220px;margin:0 auto">🔮 Generar proyección</button>
+      </div>
+
+      <!-- Loading -->
+      <div id="forecastLoading" style="display:none;text-align:center;padding:3rem">
+        <div class="spinner" style="margin:0 auto 1rem;border-top-color:var(--accent)"></div>
+        <div style="color:var(--ink-muted);font-size:0.85rem">Calculando tu proyección...</div>
+      </div>
+
+      <!-- Results -->
+      <div id="forecastResult" style="display:none">
+
+        <!-- Alert banner -->
+        <div id="forecastAlert" style="margin-bottom:1.25rem;display:none"></div>
+
+        <!-- Forecast cards -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem" id="forecastCards"></div>
+
+        <!-- Chart -->
+        <div class="card" style="margin-bottom:1.25rem">
+          <div class="card-title" style="margin-bottom:0.3rem">📈 Proyección gráfica</div>
+          <div class="card-sub" style="margin-bottom:1rem">Histórico vs proyección — barras sólidas = real, barras transparentes = estimado</div>
+          <div class="chart-wrap"><canvas id="forecastChart"></canvas></div>
+        </div>
+
+        <!-- Summary table -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:1rem">📋 Resumen de proyección</div>
+          <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border)">
+                <th style="text-align:left;padding:0.5rem 0.75rem;color:var(--ink-muted);font-weight:600">Mes</th>
+                <th style="text-align:right;padding:0.5rem 0.75rem;color:var(--green);font-weight:600">Ingresos</th>
+                <th style="text-align:right;padding:0.5rem 0.75rem;color:var(--red);font-weight:600">Gastos</th>
+                <th style="text-align:right;padding:0.5rem 0.75rem;font-weight:600">Utilidad</th>
+                <th style="text-align:center;padding:0.5rem 0.75rem;color:var(--ink-muted);font-weight:600">Tipo</th>
+              </tr>
+            </thead>
+            <tbody id="forecastTable"></tbody>
+          </table>
+        </div>
+
+        <!-- Regenerate -->
+        <div style="text-align:center;margin-top:1.5rem">
+          <button onclick="generarForecast()" style="padding:0.5rem 1.25rem;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);font-family:'Instrument Sans',sans-serif;font-size:0.82rem;cursor:pointer;color:var(--ink-muted)">🔄 Recalcular</button>
         </div>
       </div>
     </div>
@@ -1063,6 +1146,197 @@ function renderInsights(insights) {
         </div>
       </div>`;
   }).join('');
+}
+
+
+// ── FORECAST ──────────────────────────────────────────
+let forecastChartInstance = null;
+
+function generarForecast() {
+  const txs = S.transactions;
+  if (txs.length === 0) return showToast('Primero registra algunos movimientos', 'err');
+
+  // Build monthly data
+  const monthly = {};
+  txs.forEach(t => {
+    const ym = t.fecha.substring(0,7);
+    if (!monthly[ym]) monthly[ym] = {ing:0, gas:0};
+    monthly[ym][t.tipo==='ingreso'?'ing':'gas'] += t.monto;
+  });
+  const months = Object.entries(monthly).sort();
+
+  if (months.length < 2) {
+    showToast('Necesitas al menos 2 meses de datos para el forecast', 'err');
+    return;
+  }
+
+  document.getElementById('forecastEmpty').style.display = 'none';
+  document.getElementById('forecastResult').style.display = 'none';
+  document.getElementById('forecastLoading').style.display = 'block';
+  document.getElementById('btnForecast').disabled = true;
+
+  setTimeout(() => {
+    // Calculate growth rates using linear regression on last months
+    const n = months.length;
+    const ingValues = months.map(([,v]) => v.ing);
+    const gasValues = months.map(([,v]) => v.gas);
+
+    // Average month-over-month growth rate
+    let ingGrowthRates = [], gasGrowthRates = [];
+    for (let i = 1; i < ingValues.length; i++) {
+      if (ingValues[i-1] > 0) ingGrowthRates.push((ingValues[i] - ingValues[i-1]) / ingValues[i-1]);
+      if (gasValues[i-1] > 0) gasGrowthRates.push((gasValues[i] - gasValues[i-1]) / gasValues[i-1]);
+    }
+
+    // Use weighted average (recent months weigh more)
+    function weightedGrowth(rates) {
+      if (rates.length === 0) return 0;
+      let totalWeight = 0, weightedSum = 0;
+      rates.forEach((r, i) => {
+        const w = i + 1;
+        weightedSum += r * w;
+        totalWeight += w;
+      });
+      const avg = weightedSum / totalWeight;
+      // Cap growth between -30% and +30% to avoid crazy projections
+      return Math.max(-0.30, Math.min(0.30, avg));
+    }
+
+    const ingGrowth = weightedGrowth(ingGrowthRates);
+    const gasGrowth = weightedGrowth(gasGrowthRates);
+
+    // Last known values
+    const lastIng = ingValues[n-1];
+    const lastGas = gasValues[n-1];
+
+    // Generate next 3 months
+    const lastMonthStr = months[n-1][0];
+    const [lastYear, lastMon] = lastMonthStr.split('-').map(Number);
+
+    const projections = [];
+    for (let i = 1; i <= 3; i++) {
+      let m = lastMon + i, y = lastYear;
+      if (m > 12) { m -= 12; y++; }
+      const label = `${y}-${String(m).padStart(2,'0')}`;
+      const projIng = lastIng * Math.pow(1 + ingGrowth, i);
+      const projGas = lastGas * Math.pow(1 + gasGrowth, i);
+      projections.push({ label, ing: Math.max(0, projIng), gas: Math.max(0, projGas) });
+    }
+
+    // Render alert if gastos growing faster than ingresos
+    const alertEl = document.getElementById('forecastAlert');
+    if (gasGrowth > ingGrowth + 0.05) {
+      const monthsToBreakeven = Math.ceil(Math.log(lastIng/lastGas) / Math.log((1+gasGrowth)/(1+ingGrowth)));
+      alertEl.style.display = 'block';
+      alertEl.innerHTML = `
+        <div style="background:var(--gold-bg);border:1.5px solid #f0d890;border-radius:12px;padding:1rem 1.25rem;display:flex;gap:0.75rem;align-items:center">
+          <span style="font-size:1.5rem">⚠️</span>
+          <div style="font-size:0.83rem;line-height:1.6">
+            <strong>Tus gastos están creciendo más rápido que tus ingresos.</strong> 
+            Si esta tendencia continúa, tus gastos podrían superar tus ingresos en aproximadamente <strong>${monthsToBreakeven > 0 && monthsToBreakeven < 24 ? monthsToBreakeven + ' meses' : 'los próximos meses'}</strong>.
+            Te recomendamos revisar tus gastos principales.
+          </div>
+        </div>`;
+    } else {
+      alertEl.style.display = 'none';
+    }
+
+    // Render forecast cards
+    document.getElementById('forecastCards').innerHTML = projections.map((p, i) => {
+      const util = p.ing - p.gas;
+      const margen = p.ing > 0 ? (util/p.ing*100) : 0;
+      const nombres = ['Próximo mes','En 2 meses','En 3 meses'];
+      return `
+        <div class="card" style="border-top:3px solid ${util>=0?'var(--green)':'var(--red)'}">
+          <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-muted);margin-bottom:0.3rem">${nombres[i]}</div>
+          <div style="font-size:0.95rem;font-weight:700;color:var(--ink-muted);margin-bottom:0.9rem">${p.label}</div>
+          <div style="display:flex;flex-direction:column;gap:0.45rem">
+            <div style="display:flex;justify-content:space-between;font-size:0.82rem">
+              <span style="color:var(--ink-muted)">💰 Ingresos est.</span>
+              <span style="color:var(--green);font-weight:600">${fmt(p.ing)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.82rem">
+              <span style="color:var(--ink-muted)">📤 Gastos est.</span>
+              <span style="color:var(--red);font-weight:600">${fmt(p.gas)}</span>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:0.45rem;display:flex;justify-content:space-between;font-size:0.85rem">
+              <span style="font-weight:600">Utilidad est.</span>
+              <span style="font-weight:700;color:${util>=0?'var(--green)':'var(--red)'}">${fmt(util)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem">
+              <span style="color:var(--ink-muted)">Margen</span>
+              <span style="color:var(--gold);font-weight:600">${margen.toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Render table
+    const allRows = [
+      ...months.map(([m,v]) => ({label:m, ing:v.ing, gas:v.gas, tipo:'real'})),
+      ...projections.map(p => ({label:p.label, ing:p.ing, gas:p.gas, tipo:'estimado'}))
+    ];
+    document.getElementById('forecastTable').innerHTML = allRows.map(r => {
+      const util = r.ing - r.gas;
+      const isProj = r.tipo === 'estimado';
+      return `<tr style="border-bottom:1px solid var(--border);${isProj?'background:var(--surface2);font-style:italic':''}">
+        <td style="padding:0.5rem 0.75rem;font-weight:500">${r.label}</td>
+        <td style="padding:0.5rem 0.75rem;text-align:right;color:var(--green)">${fmt(r.ing)}</td>
+        <td style="padding:0.5rem 0.75rem;text-align:right;color:var(--red)">${fmt(r.gas)}</td>
+        <td style="padding:0.5rem 0.75rem;text-align:right;font-weight:600;color:${util>=0?'var(--green)':'var(--red)'}">${fmt(util)}</td>
+        <td style="padding:0.5rem 0.75rem;text-align:center">
+          <span style="font-size:0.7rem;padding:0.2rem 0.5rem;border-radius:20px;background:${isProj?'var(--gold-bg)':'var(--green-bg)'};color:${isProj?'var(--gold)':'var(--green)'};font-weight:600">${isProj?'📊 Estimado':'✅ Real'}</span>
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Render chart
+    const chartLabels = allRows.map(r => r.label);
+    const chartIng = allRows.map(r => Math.round(r.ing));
+    const chartGas = allRows.map(r => Math.round(r.gas));
+    const isProj = allRows.map(r => r.tipo === 'estimado');
+
+    if (forecastChartInstance) forecastChartInstance.destroy();
+    const ctx = document.getElementById('forecastChart').getContext('2d');
+    forecastChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: chartLabels,
+        datasets: [
+          {
+            label: 'Ingresos',
+            data: chartIng,
+            backgroundColor: chartLabels.map((_,i) => isProj[i] ? 'rgba(30,122,69,0.35)' : 'rgba(30,122,69,0.85)'),
+            borderColor: 'rgba(30,122,69,1)',
+            borderWidth: isProj.map(p => p ? 2 : 0),
+            borderDash: [4,4],
+          },
+          {
+            label: 'Gastos',
+            data: chartGas,
+            backgroundColor: chartLabels.map((_,i) => isProj[i] ? 'rgba(192,57,43,0.25)' : 'rgba(192,57,43,0.75)'),
+            borderColor: 'rgba(192,57,43,1)',
+            borderWidth: isProj.map(p => p ? 2 : 0),
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { font: { family: 'Instrument Sans' } } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $${ctx.raw.toLocaleString('es-MX')}` } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { family: 'Instrument Sans', size: 11 } } },
+          y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { family: 'Instrument Sans', size: 11 }, callback: v => '$' + (v/1000).toFixed(0) + 'k' } }
+        }
+      }
+    });
+
+    document.getElementById('forecastLoading').style.display = 'none';
+    document.getElementById('forecastResult').style.display = 'block';
+    document.getElementById('btnForecast').disabled = false;
+  }, 600);
 }
 
 init();
