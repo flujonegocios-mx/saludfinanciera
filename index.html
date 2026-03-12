@@ -1712,10 +1712,13 @@ async function generarPDF() {
       {label:'UTILIDAD NETA', val:fmt(util), color:util>=0?C.green:C.red, bg:util>=0?[234,245,238]:[253,240,238]},
       {label:'MARGEN', val:margen.toFixed(1)+'%', color:C.gold, bg:[253,246,227]},
     ]);
+    const mesesActivos = Object.keys(txs.reduce((m,t)=>{m[t.fecha.substring(0,7)]=1;return m;},{})).length;
+    const ingTxs = txs.filter(t=>t.tipo==='ingreso');
+    const ticketProm = ingTxs.length>0 ? fmt(ing/ingTxs.length) : '$0';
     kpiRow([
       {label:'MOVIMIENTOS', val:txs.length.toString(), color:C.dark},
-      {label:'MESES CON ACTIVIDAD', val: (() => { const m={}; txs.forEach(t=>{m[t.fecha.substring(0,7)]=1}); return Object.keys(m).length.toString(); })(), color:C.dark},
-      {label:'TICKET PROMEDIO', val: txs.length>0?fmt(ing/txs.filter(t=>t.tipo==='ingreso').length||1):'$0', color:C.dark},
+      {label:'MESES CON ACTIVIDAD', val:mesesActivos.toString(), color:C.dark},
+      {label:'TICKET PROMEDIO', val:ticketProm, color:C.dark},
       {label:'PERÍODO', val:label, color:C.blue},
     ]);
   }
@@ -1767,10 +1770,7 @@ async function generarPDF() {
       const k = t.categoria||'otro';
       cats[k] = (cats[k]||0) + t.monto;
     });
-    const catRows = Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v]) => [
-      CAT_LABELS[k]||k, fmt(v), gas>0?(v/gas*100).toFixed(1)+'%',
-      {content: gas>0?(v/gas*100).toFixed(0)+'%':'0%', styles:{fillColor:[240,237,230]}}
-    ]);
+    const catRows = Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v]) => { const pct1=gas>0?(v/gas*100).toFixed(1)+'%':'0%'; const pct2=gas>0?(v/gas*100).toFixed(0)+'%':'0%'; return [CAT_LABELS[k]||k, fmt(v), pct1, pct2]; });
     doc.autoTable({
       head: [['Categoría','Importe','% del total','Participación']],
       body: catRows,
