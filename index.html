@@ -445,10 +445,12 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
           <div>
             <div style="font-weight:700;font-size:0.92rem;margin-bottom:0.4rem;color:var(--blue)">¿Cómo funciona el Forecast?</div>
             <div style="font-size:0.82rem;color:var(--ink);line-height:1.7">
-              El sistema analiza tu <strong>historial de ingresos y gastos</strong> de los últimos meses y calcula tu tendencia de crecimiento. 
-              Con esa tendencia, proyecta cómo se verán tus finanzas en los <strong>próximos 3 meses</strong>.<br><br>
-              Por ejemplo, si tus ingresos han crecido un 8% cada mes, el forecast asume que ese ritmo continuará.
-              <strong>No es una promesa</strong> — es una proyección basada en tu comportamiento actual para ayudarte a planear mejor.
+              El sistema analiza tu <strong>historial de ingresos y gastos</strong> y calcula tu tendencia usando <strong>suavización exponencial</strong> — 
+              un método estadístico que le da más peso a los meses recientes, porque reflejan mejor tu situación actual que meses lejanos.<br><br>
+              Por ejemplo, si tus ingresos han crecido un 8% cada mes, el forecast proyecta ese ritmo hacia adelante.
+              <strong>No es una promesa</strong> — es una proyección basada en tu comportamiento actual para ayudarte a planear mejor.<br><br>
+              💡 <strong>Entre más meses de datos tengas registrados, mayor será la precisión del forecast.</strong> 
+              Con 3 meses obtienes una estimación básica; con 6 meses o más, la proyección se vuelve significativamente más confiable.
             </div>
           </div>
         </div>
@@ -499,6 +501,32 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
             </thead>
             <tbody id="forecastTable"></tbody>
           </table>
+        </div>
+
+        <!-- Investment simulator -->
+        <div class="card" style="margin-top:1.25rem;border:1.5px solid #b0c8f0;background:var(--blue-bg)">
+          <div class="card-title" style="margin-bottom:0.3rem">💼 Simulador de inversión</div>
+          <div class="card-sub" style="margin-bottom:1.25rem">¿Qué pasa si haces una inversión? Simula el impacto en tus próximos 3 meses y compara escenarios.</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-size:0.78rem">💰 Monto de inversión ($)</label>
+              <input type="number" id="invMonto" placeholder="Ej: 50000" min="0" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.85rem;background:var(--surface);outline:none">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-size:0.78rem">📅 ¿En qué mes la harás?</label>
+              <select id="invMes" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.85rem;background:var(--surface);color:var(--ink);outline:none">
+                <option value="1">Próximo mes</option>
+                <option value="2">En 2 meses</option>
+                <option value="3">En 3 meses</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-size:0.78rem">📈 Crecimiento esperado en ingresos (%)</label>
+              <input type="number" id="invCrecimiento" placeholder="Ej: 20" min="0" max="200" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.85rem;background:var(--surface);outline:none">
+            </div>
+          </div>
+          <button onclick="simularInversion()" class="btn-submit" style="margin-top:0;width:auto;padding:0.6rem 1.4rem;font-size:0.85rem">📊 Simular escenarios</button>
+          <div id="invResult" style="display:none;margin-top:1.25rem"></div>
         </div>
 
         <!-- Regenerate -->
@@ -1176,34 +1204,35 @@ function generarForecast() {
   document.getElementById('btnForecast').disabled = true;
 
   setTimeout(() => {
-    // Calculate growth rates using linear regression on last months
+    // Exponential smoothing α=0.4 — optimal for volatile small business data
+    // More recent months get exponentially more weight
+    const ALPHA = 0.4;
     const n = months.length;
     const ingValues = months.map(([,v]) => v.ing);
     const gasValues = months.map(([,v]) => v.gas);
 
-    // Average month-over-month growth rate
-    let ingGrowthRates = [], gasGrowthRates = [];
-    for (let i = 1; i < ingValues.length; i++) {
-      if (ingValues[i-1] > 0) ingGrowthRates.push((ingValues[i] - ingValues[i-1]) / ingValues[i-1]);
-      if (gasValues[i-1] > 0) gasGrowthRates.push((gasValues[i] - gasValues[i-1]) / gasValues[i-1]);
+    function expSmoothedGrowth(values) {
+      if (values.length < 2) return 0;
+      // Calculate month-over-month growth rates
+      const rates = [];
+      for (let i = 1; i < values.length; i++) {
+        if (values[i-1] > 0) rates.push((values[i] - values[i-1]) / values[i-1]);
+        else rates.push(0);
+      }
+      // Apply exponential smoothing: recent rates have exponentially more weight
+      let smoothed = rates[0];
+      for (let i = 1; i < rates.length; i++) {
+        smoothed = ALPHA * rates[i] + (1 - ALPHA) * smoothed;
+      }
+      // Cap between -30% and +30%
+      return Math.max(-0.30, Math.min(0.30, smoothed));
     }
 
-    // Use weighted average (recent months weigh more)
-    function weightedGrowth(rates) {
-      if (rates.length === 0) return 0;
-      let totalWeight = 0, weightedSum = 0;
-      rates.forEach((r, i) => {
-        const w = i + 1;
-        weightedSum += r * w;
-        totalWeight += w;
-      });
-      const avg = weightedSum / totalWeight;
-      // Cap growth between -30% and +30% to avoid crazy projections
-      return Math.max(-0.30, Math.min(0.30, avg));
-    }
+    const ingGrowth = expSmoothedGrowth(ingValues);
+    const gasGrowth = expSmoothedGrowth(gasValues);
 
-    const ingGrowth = weightedGrowth(ingGrowthRates);
-    const gasGrowth = weightedGrowth(gasGrowthRates);
+    // Store for investment simulator
+    window._forecastData = { months, ingGrowth, gasGrowth, ingValues, gasValues };
 
     // Last known values
     const lastIng = ingValues[n-1];
@@ -1337,6 +1366,93 @@ function generarForecast() {
     document.getElementById('forecastResult').style.display = 'block';
     document.getElementById('btnForecast').disabled = false;
   }, 600);
+}
+
+// ── SIMULADOR DE INVERSIÓN ──────────────────────────────────────────
+function simularInversion() {
+  const monto = parseFloat(document.getElementById('invMonto').value);
+  const mes = parseInt(document.getElementById('invMes').value);
+  const crecEsperado = parseFloat(document.getElementById('invCrecimiento').value) / 100;
+
+  if (!monto || monto <= 0) return showToast('Ingresa el monto de inversión', 'err');
+  if (isNaN(crecEsperado) || crecEsperado <= 0) return showToast('Ingresa el crecimiento esperado en ingresos (%)', 'err');
+
+  const fd = window._forecastData;
+  if (!fd) return showToast('Primero genera el forecast', 'err');
+
+  const { months, ingGrowth, gasGrowth, ingValues } = fd;
+  const lastIng = ingValues[ingValues.length - 1];
+  const lastGas = fd.gasValues[fd.gasValues.length - 1];
+  const lastMonthStr = months[months.length - 1][0];
+  const [lastYear, lastMon] = lastMonthStr.split('-').map(Number);
+
+  // Build 3 scenarios: conservador (historial), moderado (punto medio), optimista (esperado)
+  const scenarios = [
+    { nombre: '📉 Conservador', desc: 'Tu tendencia actual sin inversión', growthExtra: 0, color: '#457b9d', bgColor: 'var(--blue-bg)' },
+    { nombre: '📊 Moderado', desc: 'Punto medio entre tendencia y tu expectativa', growthExtra: crecEsperado / 2, color: '#b07d0a', bgColor: 'var(--gold-bg)' },
+    { nombre: '📈 Optimista', desc: `Tu expectativa de +${(crecEsperado*100).toFixed(0)}% en ingresos`, growthExtra: crecEsperado, color: '#1e7a45', bgColor: 'var(--green-bg)' },
+  ];
+
+  // Sanity check — if expectation is far from history, show warning
+  const histGrowthPct = (ingGrowth * 100).toFixed(1);
+  const espPct = (crecEsperado * 100).toFixed(0);
+  const farFromHistory = crecEsperado > ingGrowth * 3 && crecEsperado > 0.15;
+
+  let html = '';
+
+  if (farFromHistory) {
+    html += `<div style="background:var(--gold-bg);border:1.5px solid #f0d890;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1rem;font-size:0.8rem;line-height:1.6">
+      ⚠️ <strong>Tu expectativa (${espPct}%) es muy superior a tu crecimiento histórico (${histGrowthPct}%).</strong> 
+      Esto puede ser posible con una buena inversión, pero es importante tenerlo en cuenta. 
+      Los 3 escenarios abajo te muestran el rango realista.
+    </div>`;
+  }
+
+  html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.85rem;margin-bottom:1rem">`;
+
+  scenarios.forEach(sc => {
+    let totalUtil = 0;
+    for (let i = 1; i <= 3; i++) {
+      const projIng = lastIng * Math.pow(1 + ingGrowth + (i >= mes ? sc.growthExtra : 0), i);
+      const extraGas = i === mes ? monto : 0;
+      const projGas = lastGas * Math.pow(1 + gasGrowth, i) + extraGas;
+      totalUtil += projIng - projGas;
+    }
+    const roi = monto > 0 ? ((totalUtil / monto - 1) * 100) : 0;
+
+    // Month by month
+    const rows = [];
+    for (let i = 1; i <= 3; i++) {
+      let m = lastMon + i, y = lastYear;
+      if (m > 12) { m -= 12; y++; }
+      const label = `${y}-${String(m).padStart(2,'0')}`;
+      const projIng = lastIng * Math.pow(1 + ingGrowth + (i >= mes ? sc.growthExtra : 0), i);
+      const extraGas = i === mes ? monto : 0;
+      const projGas = lastGas * Math.pow(1 + gasGrowth, i) + extraGas;
+      const util = projIng - projGas;
+      rows.push({ label, ing: projIng, gas: projGas, util });
+    }
+
+    html += `<div style="background:${sc.bgColor};border:1.5px solid rgba(0,0,0,0.08);border-radius:12px;padding:1rem">
+      <div style="font-weight:700;font-size:0.88rem;color:${sc.color};margin-bottom:0.25rem">${sc.nombre}</div>
+      <div style="font-size:0.72rem;color:var(--ink-muted);margin-bottom:0.85rem">${sc.desc}</div>
+      ${rows.map(r => `
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:0.3rem">
+          <span style="color:var(--ink-muted)">${r.label}</span>
+          <span style="font-weight:600;color:${r.util>=0?'var(--green)':'var(--red)'}">${fmt(r.util)}</span>
+        </div>`).join('')}
+      <div style="border-top:1px solid rgba(0,0,0,0.1);margin-top:0.6rem;padding-top:0.6rem;display:flex;justify-content:space-between;font-size:0.78rem">
+        <span style="font-weight:600">Utilidad 3 meses</span>
+        <span style="font-weight:700;color:${totalUtil>=0?'var(--green)':'var(--red)'}">${fmt(totalUtil)}</span>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  html += `<div style="font-size:0.75rem;color:var(--ink-muted);text-align:center">La inversión de ${fmt(monto)} se aplica como gasto en el mes seleccionado. Los ingresos adicionales se proyectan a partir de ese mes.</div>`;
+
+  document.getElementById('invResult').style.display = 'block';
+  document.getElementById('invResult').innerHTML = html;
 }
 
 init();
