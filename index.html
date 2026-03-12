@@ -6,6 +6,8 @@
 <title>ContaFácil</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
 
@@ -255,6 +257,7 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
         <button class="nav-item" onclick="showPage('importar',this)"><span class="nav-icon">📥</span>Importar Excel</button>
         <button class="nav-item" onclick="showPage('insights',this)"><span class="nav-icon">✨</span>Insights IA</button>
         <button class="nav-item" onclick="showPage('forecast',this)"><span class="nav-icon">🔮</span>Forecast</button>
+        <button class="nav-item" onclick="showPage('reporte',this)"><span class="nav-icon">📄</span>Reporte PDF</button>
       </nav>
     </div>
     <div>
@@ -535,6 +538,83 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
         </div>
       </div>
     </div>
+
+    <!-- Reporte PDF -->
+    <div class="page" id="page-reporte">
+      <div class="topbar">
+        <div>
+          <div class="page-title">📄 Reporte PDF</div>
+          <div class="page-subtitle">Genera un reporte profesional para contadores, socios o bancos</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:380px 1fr;gap:1.25rem;align-items:flex-start">
+
+        <!-- Config panel -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:1.25rem">⚙️ Configurar reporte</div>
+
+          <div class="form-group">
+            <label>📅 Período del reporte</label>
+            <select id="rptPeriodo" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.88rem;color:var(--ink);background:var(--surface);outline:none" onchange="updateRptPreview()">
+              <option value="mensual">Mensual</option>
+              <option value="trimestral">Trimestral</option>
+              <option value="semestral">Semestral</option>
+              <option value="anual">Anual</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="rptMesGroup">
+            <label>🗓️ Mes</label>
+            <select id="rptMes" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.88rem;color:var(--ink);background:var(--surface);outline:none" onchange="updateRptPreview()">
+              <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+              <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+              <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>📅 Año</label>
+            <select id="rptAnio" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.88rem;color:var(--ink);background:var(--surface);outline:none" onchange="updateRptPreview()">
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>🏢 Preparado para</label>
+            <input type="text" id="rptPara" placeholder="Ej: Contador Juan García, Banco BBVA..." style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.88rem;outline:none">
+          </div>
+
+          <div class="form-group">
+            <label>📝 Nota adicional (opcional)</label>
+            <textarea id="rptNota" rows="2" placeholder="Comentario para el destinatario..." style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.88rem;resize:none;outline:none"></textarea>
+          </div>
+
+          <div style="margin-bottom:1rem">
+            <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:0.6rem;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.06em">Secciones a incluir</label>
+            <div style="display:flex;flex-direction:column;gap:0.4rem">
+              <label style="display:flex;align-items:center;gap:0.6rem;font-size:0.83rem;cursor:pointer"><input type="checkbox" id="sec_resumen" checked> Resumen ejecutivo (KPIs)</label>
+              <label style="display:flex;align-items:center;gap:0.6rem;font-size:0.83rem;cursor:pointer"><input type="checkbox" id="sec_pl" checked> Estado de resultados</label>
+              <label style="display:flex;align-items:center;gap:0.6rem;font-size:0.83rem;cursor:pointer"><input type="checkbox" id="sec_cats" checked> Análisis por categoría</label>
+              <label style="display:flex;align-items:center;gap:0.6rem;font-size:0.83rem;cursor:pointer"><input type="checkbox" id="sec_mensual" checked> Comparativo mensual</label>
+              <label style="display:flex;align-items:center;gap:0.6rem;font-size:0.83rem;cursor:pointer"><input type="checkbox" id="sec_forecast" checked> Forecast (próximos 3 meses)</label>
+            </div>
+          </div>
+
+          <button onclick="generarPDF()" class="btn-submit" id="btnPDF" style="margin-top:0">
+            📄 Generar y descargar PDF
+          </button>
+        </div>
+
+        <!-- Preview panel -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:0.5rem">👁️ Vista previa del reporte</div>
+          <div class="card-sub" style="margin-bottom:1.25rem">Resumen de lo que incluirá el PDF</div>
+          <div id="rptPreview"></div>
+        </div>
+
+      </div>
+    </div>
   </main>
 </div>
 
@@ -798,6 +878,7 @@ function showPage(page,btn) {
   document.getElementById(`page-${page}`).classList.add('active'); btn.classList.add('active');
   if(page==='pl')renderPL(S.plMonth);
   if(page==='historial')renderHistorial();
+  if(page==='reporte')initReportePage();
 
 }
 
@@ -1366,6 +1447,448 @@ function generarForecast() {
     document.getElementById('forecastResult').style.display = 'block';
     document.getElementById('btnForecast').disabled = false;
   }, 600);
+}
+
+// ── REPORTE PDF ──────────────────────────────────────────
+function initReportePage() {
+  // Populate year selector
+  const txs = S.transactions;
+  const years = [...new Set(txs.map(t => t.fecha.substring(0,4)))].sort().reverse();
+  const currentYear = new Date().getFullYear().toString();
+  if (!years.includes(currentYear)) years.unshift(currentYear);
+  const sel = document.getElementById('rptAnio');
+  sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+
+  // Set current month
+  const now = new Date();
+  document.getElementById('rptMes').value = String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('rptPeriodo').addEventListener('change', updateRptPreview);
+  updateRptPreview();
+}
+
+function getRptRange() {
+  const periodo = document.getElementById('rptPeriodo').value;
+  const anio = document.getElementById('rptAnio').value;
+  const mes = document.getElementById('rptMes').value;
+  const mesGroup = document.getElementById('rptMesGroup');
+
+  let start, end, label;
+  const m = parseInt(mes), y = parseInt(anio);
+
+  if (periodo === 'mensual') {
+    mesGroup.style.display = 'block';
+    start = `${anio}-${mes}`;
+    end = start;
+    const mNames = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    label = `${mNames[m]} ${anio}`;
+  } else if (periodo === 'trimestral') {
+    mesGroup.style.display = 'block';
+    const q = Math.ceil(m/3);
+    const qStart = (q-1)*3+1;
+    const qEnd = q*3;
+    start = `${anio}-${String(qStart).padStart(2,'0')}`;
+    end = `${anio}-${String(qEnd).padStart(2,'0')}`;
+    label = `Q${q} ${anio}`;
+  } else if (periodo === 'semestral') {
+    mesGroup.style.display = 'block';
+    const half = m <= 6 ? 1 : 2;
+    start = `${anio}-${half===1?'01':'07'}`;
+    end = `${anio}-${half===1?'06':'12'}`;
+    label = `${half===1?'Primer':'Segundo'} semestre ${anio}`;
+  } else {
+    mesGroup.style.display = 'none';
+    start = `${anio}-01`;
+    end = `${anio}-12`;
+    label = `Año ${anio}`;
+  }
+  return { start, end, label, periodo };
+}
+
+function filterTxsByRange(start, end) {
+  return S.transactions.filter(t => {
+    const ym = t.fecha.substring(0,7);
+    return ym >= start && ym <= end;
+  });
+}
+
+function updateRptPreview() {
+  const { start, end, label } = getRptRange();
+  const txs = filterTxsByRange(start, end);
+  const ing = txs.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const gas = txs.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+  const util = ing - gas;
+  const margen = ing > 0 ? (util/ing*100) : 0;
+  const biz = S.businesses.find(b=>b.id===S.activeBizId);
+
+  // Monthly breakdown for period
+  const monthly = {};
+  txs.forEach(t => {
+    const ym = t.fecha.substring(0,7);
+    if (!monthly[ym]) monthly[ym] = {ing:0,gas:0};
+    monthly[ym][t.tipo==='ingreso'?'ing':'gas'] += t.monto;
+  });
+  const months = Object.entries(monthly).sort();
+
+  document.getElementById('rptPreview').innerHTML = `
+    <div style="background:var(--surface2);border-radius:10px;padding:1.25rem;margin-bottom:1rem">
+      <div style="font-weight:700;font-size:0.95rem;margin-bottom:0.75rem">📋 ${biz?.name||'Negocio'} — ${label}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:1rem">
+        <div style="background:var(--green-bg);border-radius:8px;padding:0.65rem 0.85rem">
+          <div style="font-size:0.7rem;color:var(--ink-muted)">Ingresos</div>
+          <div style="font-weight:700;color:var(--green)">${fmt(ing)}</div>
+        </div>
+        <div style="background:var(--red-bg);border-radius:8px;padding:0.65rem 0.85rem">
+          <div style="font-size:0.7rem;color:var(--ink-muted)">Gastos</div>
+          <div style="font-weight:700;color:var(--red)">${fmt(gas)}</div>
+        </div>
+        <div style="background:var(--gold-bg);border-radius:8px;padding:0.65rem 0.85rem">
+          <div style="font-size:0.7rem;color:var(--ink-muted)">Utilidad</div>
+          <div style="font-weight:700;color:${util>=0?'var(--green)':'var(--red)'}">${fmt(util)}</div>
+        </div>
+        <div style="background:var(--blue-bg);border-radius:8px;padding:0.65rem 0.85rem">
+          <div style="font-size:0.7rem;color:var(--ink-muted)">Margen</div>
+          <div style="font-weight:700;color:var(--blue)">${margen.toFixed(1)}%</div>
+        </div>
+      </div>
+      <div style="font-size:0.78rem;color:var(--ink-muted)">${txs.length} movimientos en el período · ${months.length} meses con actividad</div>
+    </div>
+    <div style="font-size:0.8rem;color:var(--ink-muted);line-height:1.7">
+      ${txs.length === 0 ? '⚠️ No hay movimientos en este período.' : `✅ El PDF incluirá ${txs.length} movimientos del período seleccionado.`}
+    </div>`;
+}
+
+async function generarPDF() {
+  const { jsPDF } = window.jspdf;
+  if (!jsPDF) return showToast('Cargando librería PDF, intenta en 2 segundos', 'err');
+
+  const btn = document.getElementById('btnPDF');
+  btn.disabled = true; btn.textContent = '⏳ Generando...';
+
+  const { start, end, label, periodo } = getRptRange();
+  const txs = filterTxsByRange(start, end);
+  const biz = S.businesses.find(b=>b.id===S.activeBizId);
+  const para = document.getElementById('rptPara').value.trim();
+  const nota = document.getElementById('rptNota').value.trim();
+
+  const ing = txs.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const gas = txs.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+  const util = ing - gas;
+  const margen = ing > 0 ? (util/ing*100) : 0;
+
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W = 210, margin = 18;
+  let y = 0;
+
+  // Colors
+  const C = {
+    dark: [28,26,23],
+    green: [30,122,69],
+    red: [192,57,43],
+    gold: [176,125,10],
+    blue: [26,74,138],
+    bg: [248,246,241],
+    border: [226,221,212],
+    muted: [138,130,112],
+    white: [255,255,255],
+  };
+
+  function setColor(c, fill=false) {
+    if (fill) doc.setFillColor(...c);
+    else doc.setTextColor(...c);
+  }
+
+  function rect(x,ry,w,h,c) { doc.setFillColor(...c); doc.rect(x,ry,w,h,'F'); }
+  function line(x1,ry,x2) { doc.setDrawColor(...C.border); doc.setLineWidth(0.3); doc.line(x1,ry,x2,ry); }
+
+  // ── COVER PAGE ──
+  rect(0,0,W,297,C.dark);
+  // Accent stripe
+  rect(0,0,6,297,C.green);
+
+  // Business name
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(28);
+  setColor(C.white);
+  doc.text(biz?.name || 'Mi Negocio', margin+4, 80);
+
+  // Report title
+  doc.setFontSize(14);
+  doc.setFont('helvetica','normal');
+  setColor([180,220,190]);
+  doc.text('REPORTE FINANCIERO', margin+4, 95);
+
+  // Period
+  doc.setFontSize(11);
+  setColor(C.muted);
+  doc.text(label, margin+4, 108);
+
+  // KPI boxes on cover
+  const kpis = [
+    { label:'Ingresos', val:fmt(ing), color:C.green },
+    { label:'Gastos', val:fmt(gas), color:C.red },
+    { label:'Utilidad', val:fmt(util), color:util>=0?C.green:C.red },
+    { label:'Margen', val:margen.toFixed(1)+'%', color:C.gold },
+  ];
+  kpis.forEach((k,i) => {
+    const kx = margin + 4 + (i%2)*88;
+    const ky = 130 + Math.floor(i/2)*28;
+    rect(kx, ky, 82, 22, [40,38,35]);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+    setColor(C.muted); doc.text(k.label.toUpperCase(), kx+5, ky+8);
+    doc.setFont('helvetica','bold'); doc.setFontSize(13);
+    doc.setTextColor(...k.color); doc.text(k.val, kx+5, ky+17);
+  });
+
+  // Prepared for
+  if (para) {
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+    setColor(C.muted); doc.text('PREPARADO PARA', margin+4, 198);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    setColor(C.white); doc.text(para, margin+4, 206);
+  }
+
+  // Note
+  if (nota) {
+    doc.setFont('helvetica','italic'); doc.setFontSize(8.5);
+    setColor(C.muted);
+    const lines = doc.splitTextToSize(nota, W - margin*2 - 8);
+    doc.text(lines, margin+4, 225);
+  }
+
+  // Footer cover
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+  setColor([80,78,75]);
+  doc.text(`Generado el ${new Date().toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric'})}`, margin+4, 282);
+  doc.text('ContaFácil — Salud Financiera', W-margin-4, 282, {align:'right'});
+
+  // ── CONTENT PAGES ──
+  function addPage() {
+    doc.addPage();
+    y = margin;
+    // Header bar
+    rect(0,0,W,12,[248,246,241]);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+    setColor(C.muted);
+    doc.text(biz?.name||'Negocio', margin, 8);
+    doc.text(`${label} · ContaFácil`, W-margin, 8, {align:'right'});
+    line(0, 12, W);
+    y = 22;
+  }
+
+  function sectionTitle(title) {
+    if (y > 255) addPage();
+    rect(margin, y, W-margin*2, 8, [240,237,230]);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+    setColor(C.dark); doc.text(title, margin+4, y+5.5);
+    y += 13;
+  }
+
+  function kpiRow(items) {
+    const w = (W - margin*2) / items.length;
+    items.forEach((k,i) => {
+      const kx = margin + i*w;
+      rect(kx, y, w-2, 18, k.bg||[248,246,241]);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7);
+      setColor(C.muted); doc.text(k.label, kx+4, y+6);
+      doc.setFont('helvetica','bold'); doc.setFontSize(11);
+      doc.setTextColor(...k.color); doc.text(k.val, kx+4, y+14);
+    });
+    y += 22;
+  }
+
+  // ── SECTION 1: RESUMEN EJECUTIVO ──
+  if (document.getElementById('sec_resumen').checked) {
+    addPage();
+    sectionTitle('1. RESUMEN EJECUTIVO');
+    kpiRow([
+      {label:'INGRESOS TOTALES', val:fmt(ing), color:C.green, bg:[234,245,238]},
+      {label:'GASTOS TOTALES', val:fmt(gas), color:C.red, bg:[253,240,238]},
+      {label:'UTILIDAD NETA', val:fmt(util), color:util>=0?C.green:C.red, bg:util>=0?[234,245,238]:[253,240,238]},
+      {label:'MARGEN', val:margen.toFixed(1)+'%', color:C.gold, bg:[253,246,227]},
+    ]);
+    kpiRow([
+      {label:'MOVIMIENTOS', val:txs.length.toString(), color:C.dark},
+      {label:'MESES CON ACTIVIDAD', val: (() => { const m={}; txs.forEach(t=>{m[t.fecha.substring(0,7)]=1}); return Object.keys(m).length.toString(); })(), color:C.dark},
+      {label:'TICKET PROMEDIO', val: txs.length>0?fmt(ing/txs.filter(t=>t.tipo==='ingreso').length||1):'$0', color:C.dark},
+      {label:'PERÍODO', val:label, color:C.blue},
+    ]);
+  }
+
+  // ── SECTION 2: ESTADO DE RESULTADOS ──
+  if (document.getElementById('sec_pl').checked) {
+    if (y > 200) addPage(); else { y += 5; line(margin,y,W-margin); y += 8; }
+    sectionTitle('2. ESTADO DE RESULTADOS');
+
+    const cats = {};
+    txs.forEach(t => {
+      if (!cats[t.tipo]) cats[t.tipo] = {};
+      const k = t.categoria||'otro';
+      cats[t.tipo][k] = (cats[t.tipo][k]||0) + t.monto;
+    });
+
+    const plRows = [];
+    plRows.push([{content:'INGRESOS', colSpan:3, styles:{fillColor:C.green, textColor:C.white, fontStyle:'bold', fontSize:8}}]);
+    Object.entries(cats.ingreso||{}).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => {
+      plRows.push([CAT_LABELS[k]||k, fmt(v), ing>0?(v/ing*100).toFixed(1)+'%':'—']);
+    });
+    plRows.push([{content:'Total Ingresos', styles:{fontStyle:'bold'}}, {content:fmt(ing), styles:{fontStyle:'bold', textColor:C.green}}, '100%']);
+    plRows.push([{content:'COSTOS Y GASTOS', colSpan:3, styles:{fillColor:C.red, textColor:C.white, fontStyle:'bold', fontSize:8}}]);
+    Object.entries(cats.gasto||{}).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => {
+      plRows.push([CAT_LABELS[k]||k, `(${fmt(v)})`, ing>0?(v/ing*100).toFixed(1)+'%':'—']);
+    });
+    plRows.push([{content:'Total Gastos', styles:{fontStyle:'bold'}}, {content:`(${fmt(gas)})`, styles:{fontStyle:'bold', textColor:C.red}}, ing>0?(gas/ing*100).toFixed(1)+'%':'—']);
+    plRows.push([{content:'UTILIDAD NETA', styles:{fontStyle:'bold', fillColor:[240,237,230]}}, {content:fmt(util), styles:{fontStyle:'bold', textColor:util>=0?C.green:C.red, fillColor:[240,237,230]}}, {content:margen.toFixed(1)+'%', styles:{fontStyle:'bold', fillColor:[240,237,230]}}]);
+
+    doc.autoTable({
+      head: [['Concepto','Importe','% Ingresos']],
+      body: plRows,
+      startY: y,
+      margin: {left:margin, right:margin},
+      styles: {fontSize:8.5, cellPadding:2.5, font:'helvetica'},
+      headStyles: {fillColor:C.dark, textColor:C.white, fontStyle:'bold'},
+      columnStyles: {1:{halign:'right'}, 2:{halign:'right', cellWidth:22}},
+      theme:'grid',
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  // ── SECTION 3: ANÁLISIS POR CATEGORÍA ──
+  if (document.getElementById('sec_cats').checked) {
+    if (y > 200) addPage(); else { y += 3; }
+    sectionTitle('3. ANÁLISIS POR CATEGORÍA DE GASTO');
+    const cats = {};
+    txs.filter(t=>t.tipo==='gasto').forEach(t => {
+      const k = t.categoria||'otro';
+      cats[k] = (cats[k]||0) + t.monto;
+    });
+    const catRows = Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v]) => [
+      CAT_LABELS[k]||k, fmt(v), gas>0?(v/gas*100).toFixed(1)+'%',
+      {content: gas>0?(v/gas*100).toFixed(0)+'%':'0%', styles:{fillColor:[240,237,230]}}
+    ]);
+    doc.autoTable({
+      head: [['Categoría','Importe','% del total','Participación']],
+      body: catRows,
+      startY: y,
+      margin: {left:margin, right:margin},
+      styles: {fontSize:8.5, cellPadding:2.5},
+      headStyles: {fillColor:C.dark, textColor:C.white, fontStyle:'bold'},
+      columnStyles: {1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'center'}},
+      theme:'striped',
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  // ── SECTION 4: COMPARATIVO MENSUAL ──
+  if (document.getElementById('sec_mensual').checked) {
+    addPage();
+    sectionTitle('4. COMPARATIVO MENSUAL');
+    const monthly = {};
+    txs.forEach(t => {
+      const ym = t.fecha.substring(0,7);
+      if (!monthly[ym]) monthly[ym] = {ing:0,gas:0};
+      monthly[ym][t.tipo==='ingreso'?'ing':'gas'] += t.monto;
+    });
+    const mNames = {
+      '01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun',
+      '07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'
+    };
+    const monthRows = Object.entries(monthly).sort().map(([m,v]) => {
+      const u = v.ing - v.gas;
+      const mg = v.ing>0?(u/v.ing*100):0;
+      return [
+        `${mNames[m.split('-')[1]]||m} ${m.split('-')[0]}`,
+        fmt(v.ing), fmt(v.gas), fmt(u), mg.toFixed(1)+'%'
+      ];
+    });
+    // Totals row
+    monthRows.push([{content:'TOTAL',styles:{fontStyle:'bold'}}, {content:fmt(ing),styles:{fontStyle:'bold',textColor:C.green}}, {content:fmt(gas),styles:{fontStyle:'bold',textColor:C.red}}, {content:fmt(util),styles:{fontStyle:'bold',textColor:util>=0?C.green:C.red}}, {content:margen.toFixed(1)+'%',styles:{fontStyle:'bold'}}]);
+
+    doc.autoTable({
+      head: [['Mes','Ingresos','Gastos','Utilidad','Margen']],
+      body: monthRows,
+      startY: y,
+      margin: {left:margin, right:margin},
+      styles: {fontSize:8.5, cellPadding:2.5},
+      headStyles: {fillColor:C.dark, textColor:C.white, fontStyle:'bold'},
+      columnStyles: {1:{halign:'right',textColor:C.green}, 2:{halign:'right',textColor:C.red}, 3:{halign:'right'}, 4:{halign:'right'}},
+      theme:'striped',
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  // ── SECTION 5: FORECAST ──
+  if (document.getElementById('sec_forecast').checked) {
+    if (y > 200) addPage(); else { y += 3; }
+    sectionTitle('5. FORECAST — PRÓXIMOS 3 MESES');
+
+    // Calculate forecast
+    const allTxs = S.transactions;
+    const allMonthly = {};
+    allTxs.forEach(t => {
+      const ym = t.fecha.substring(0,7);
+      if (!allMonthly[ym]) allMonthly[ym] = {ing:0,gas:0};
+      allMonthly[ym][t.tipo==='ingreso'?'ing':'gas'] += t.monto;
+    });
+    const allMonths = Object.entries(allMonthly).sort();
+    const ALPHA = 0.4;
+    function expGrowth(vals) {
+      if (vals.length<2) return 0;
+      const rates = [];
+      for (let i=1;i<vals.length;i++) rates.push(vals[i-1]>0?(vals[i]-vals[i-1])/vals[i-1]:0);
+      let s = rates[0];
+      for (let i=1;i<rates.length;i++) s = ALPHA*rates[i]+(1-ALPHA)*s;
+      return Math.max(-0.3,Math.min(0.3,s));
+    }
+    const aIng = allMonths.map(([,v])=>v.ing);
+    const aGas = allMonths.map(([,v])=>v.gas);
+    const iG = expGrowth(aIng), gG = expGrowth(aGas);
+    const lastI = aIng[aIng.length-1]||0, lastG = aGas[aGas.length-1]||0;
+    const lastMStr = allMonths[allMonths.length-1]?.[0]||`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+    const [lY,lM] = lastMStr.split('-').map(Number);
+    const fcRows = [];
+    for (let i=1;i<=3;i++) {
+      let m=lM+i, yr=lY; if(m>12){m-=12;yr++;}
+      const lbl=`${yr}-${String(m).padStart(2,'0')}`;
+      const pi=lastI*Math.pow(1+iG,i), pg=lastG*Math.pow(1+gG,i);
+      const pu=pi-pg, pm=pi>0?(pu/pi*100):0;
+      fcRows.push([lbl, fmt(Math.max(0,pi)), fmt(Math.max(0,pg)), fmt(pu), pm.toFixed(1)+'%', {content:'Estimado', styles:{textColor:C.gold, fontStyle:'italic'}}]);
+    }
+    doc.autoTable({
+      head: [['Mes','Ingresos est.','Gastos est.','Utilidad est.','Margen est.','Tipo']],
+      body: fcRows,
+      startY: y,
+      margin: {left:margin, right:margin},
+      styles: {fontSize:8.5, cellPadding:2.5, fillColor:[253,246,227]},
+      headStyles: {fillColor:C.dark, textColor:C.white, fontStyle:'bold'},
+      columnStyles: {1:{halign:'right',textColor:C.green}, 2:{halign:'right',textColor:C.red}, 3:{halign:'right'}, 4:{halign:'right'}, 5:{halign:'center'}},
+      theme:'grid',
+    });
+    y = doc.lastAutoTable.finalY + 8;
+
+    // Disclaimer
+    doc.setFont('helvetica','italic'); doc.setFontSize(7.5);
+    setColor(C.muted);
+    doc.text('* El forecast es una proyección basada en tendencias históricas usando suavización exponencial (α=0.4). No constituye una garantía de resultados futuros.', margin, y, {maxWidth: W-margin*2});
+  }
+
+  // ── LAST PAGE FOOTER ──
+  const pageCount = doc.getNumberOfPages();
+  for (let i=1; i<=pageCount; i++) {
+    doc.setPage(i);
+    if (i > 1) {
+      doc.setFont('helvetica','normal'); doc.setFontSize(7);
+      setColor(C.muted);
+      doc.text(`Página ${i} de ${pageCount}`, W/2, 290, {align:'center'});
+      line(margin, 285, W-margin);
+    }
+  }
+
+  // Save
+  const fname = `reporte_${(biz?.name||'negocio').replace(/\s+/g,'_')}_${label.replace(/\s+/g,'_')}.pdf`;
+  doc.save(fname);
+
+  btn.disabled = false; btn.textContent = '📄 Generar y descargar PDF';
+  showToast('✅ PDF descargado', 'ok');
 }
 
 // ── SIMULADOR DE INVERSIÓN ──────────────────────────────────────────
