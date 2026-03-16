@@ -861,7 +861,7 @@ function renderPL(filterYM=null) {
   Object.entries(gasMap).forEach(([k,v])=>{html+=`<tr><td>${CAT_LABELS[k]||k}</td><td class="text-red">(${fmt(v)})</td><td>${totalIng>0?((v/totalIng)*100).toFixed(1)+'%':'—'}</td></tr>`;});
   html+=`<tr class="pl-subtotal"><td><strong>Total Gastos</strong></td><td class="text-red"><strong>(${fmt(totalGas)})</strong></td><td>${totalIng>0?((totalGas/totalIng)*100).toFixed(1)+'%':'—'}</td></tr>`;
   const utilClass=util>=0?'text-green':'text-red'; const margen=totalIng>0?((util/totalIng)*100).toFixed(1)+'%':'—';
-  html+=`<tr class="pl-net" style="background:${util>=0?'var(--green-bg)':'var(--red-bg)'}"><td>🏆 UTILIDAD NETA</td><td class="${utilClass}">${fmt(util)}</td><td class="${utilClass}">${margen}</td></tr>`;
+  html+=`<tr class="pl-net" style="background:${util>=0?'var(--green-bg)':'var(--red-bg)'}"><td>📊 UTILIDAD BRUTA</td><td class="${utilClass}">${fmt(util)}</td><td class="${utilClass}">${margen}</td></tr>`;
   document.getElementById('plBody').innerHTML=html||`<tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--ink-muted)">Sin movimientos</td></tr>`;
 }
 
@@ -963,11 +963,14 @@ function renderColumnMapper() {
         <div style="font-size:0.72rem;color:var(--ink-muted);margin-top:0.15rem">${f.hint}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:0.4rem">
-        <select id="map_${f.key}" style="padding:0.5rem 0.75rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.82rem;background:var(--surface);color:var(--ink);outline:none">${opts}</select>
-        ${f.key === 'tipo' ? `<select id="map_tipo_default" style="padding:0.5rem 0.75rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.82rem;background:var(--surface);color:var(--ink);outline:none">
-          <option value="ingreso">Todos son ingresos</option>
-          <option value="gasto">Todos son gastos</option>
-        </select>` : ''}
+        <select id="map_${f.key}" ${f.key==='tipo'?'onchange="toggleTipoDefault()"':''} style="padding:0.5rem 0.75rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.82rem;background:var(--surface);color:var(--ink);outline:none">${opts}</select>
+        ${f.key === 'tipo' ? `<div id="map_tipo_default_wrap" style="margin-top:0.3rem">
+          <div style="font-size:0.7rem;color:var(--ink-muted);margin-bottom:0.3rem">Si no tienes columna de tipo, asigna uno para todos:</div>
+          <select id="map_tipo_default" style="padding:0.5rem 0.75rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.82rem;background:var(--surface);color:var(--ink);outline:none;width:100%">
+            <option value="ingreso">Todos son ingresos</option>
+            <option value="gasto">Todos son gastos</option>
+          </select>
+        </div>` : ''}
       </div>
     </div>`).join('');
 
@@ -979,11 +982,22 @@ function renderColumnMapper() {
     if (low.includes('monto') || low.includes('valor') || low.includes('amount') || low.includes('total') || low.includes('precio') || low.includes('venta')) setMapVal('monto', idx);
     if (low.includes('tipo') || low.includes('type') || low.includes('categoria') || low.includes('category')) setMapVal('tipo', idx);
   });
+  // Show/hide default tipo selector based on auto-detected columns
+  toggleTipoDefault();
 }
 
 function setMapVal(key, idx) {
   const el = document.getElementById(`map_${key}`);
   if (el) el.value = idx;
+}
+
+function toggleTipoDefault() {
+  const tipoSel = document.getElementById('map_tipo');
+  const wrap = document.getElementById('map_tipo_default_wrap');
+  if (!tipoSel || !wrap) return;
+  // If user selected a column (value >= 0), hide the default selector
+  const hasColumn = parseInt(tipoSel.value) >= 0;
+  wrap.style.display = hasColumn ? 'none' : 'block';
 }
 
 function renderPreview(rows) {
@@ -1709,7 +1723,7 @@ async function generarPDF() {
     kpiRow([
       {label:'INGRESOS TOTALES', val:fmt(ing), color:C.green, bg:[234,245,238]},
       {label:'GASTOS TOTALES', val:fmt(gas), color:C.red, bg:[253,240,238]},
-      {label:'UTILIDAD NETA', val:fmt(util), color:util>=0?C.green:C.red, bg:util>=0?[234,245,238]:[253,240,238]},
+      {label:'UTILIDAD BRUTA', val:fmt(util), color:util>=0?C.green:C.red, bg:util>=0?[234,245,238]:[253,240,238]},
       {label:'MARGEN', val:margen.toFixed(1)+'%', color:C.gold, bg:[253,246,227]},
     ]);
     const mesesActivos = Object.keys(txs.reduce((m,t)=>{m[t.fecha.substring(0,7)]=1;return m;},{})).length;
@@ -1746,7 +1760,7 @@ async function generarPDF() {
       plRows.push([CAT_LABELS[k]||k, `(${fmt(v)})`, ing>0?(v/ing*100).toFixed(1)+'%':'—']);
     });
     plRows.push([{content:'Total Gastos', styles:{fontStyle:'bold'}}, {content:`(${fmt(gas)})`, styles:{fontStyle:'bold', textColor:C.red}}, ing>0?(gas/ing*100).toFixed(1)+'%':'—']);
-    plRows.push([{content:'UTILIDAD NETA', styles:{fontStyle:'bold', fillColor:[240,237,230]}}, {content:fmt(util), styles:{fontStyle:'bold', textColor:util>=0?C.green:C.red, fillColor:[240,237,230]}}, {content:margen.toFixed(1)+'%', styles:{fontStyle:'bold', fillColor:[240,237,230]}}]);
+    plRows.push([{content:'UTILIDAD BRUTA', styles:{fontStyle:'bold', fillColor:[240,237,230]}}, {content:fmt(util), styles:{fontStyle:'bold', textColor:util>=0?C.green:C.red, fillColor:[240,237,230]}}, {content:margen.toFixed(1)+'%', styles:{fontStyle:'bold', fillColor:[240,237,230]}}]);
 
     doc.autoTable({
       head: [['Concepto','Importe','% Ingresos']],
