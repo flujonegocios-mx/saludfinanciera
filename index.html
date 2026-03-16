@@ -115,12 +115,16 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
 .period-btn.active { background:var(--ink); color:#fff; font-weight:600; }
 
 .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
-.kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.25rem 1.4rem; }
-.kpi-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem; }
-.kpi-label { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); }
-.kpi-icon { width:30px; height:30px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:0.9rem; }
-.kpi-value { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; letter-spacing:-0.02em; }
-.kpi-sub { font-size:0.73rem; margin-top:0.25rem; color:var(--ink-muted); }
+.kpi-card { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--border); border-radius:var(--radius); padding:1.4rem 1.5rem; transition:box-shadow 0.15s; }
+.kpi-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.07); }
+.kpi-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem; }
+.kpi-label { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.09em; color:var(--ink-muted); font-weight:600; }
+.kpi-icon { display:none; }
+.kpi-value { font-family:'Syne',sans-serif; font-size:1.7rem; font-weight:800; letter-spacing:-0.03em; line-height:1; }
+.kpi-sub { font-size:0.72rem; margin-top:0.5rem; color:var(--ink-muted); display:flex; align-items:center; gap:0.3rem; }
+.kpi-delta { font-size:0.68rem; font-weight:700; padding:0.15rem 0.4rem; border-radius:4px; }
+.kpi-delta.up { background:var(--green-bg); color:var(--green); }
+.kpi-delta.down { background:var(--red-bg); color:var(--red); }
 .text-green { color:var(--green); }
 .text-red { color:var(--red); }
 
@@ -128,10 +132,13 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
 .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.4rem; }
 .card-title { font-family:'Syne',sans-serif; font-size:0.9rem; font-weight:700; margin-bottom:0.2rem; }
 .card-sub { font-size:0.73rem; color:var(--ink-muted); margin-bottom:1.1rem; }
-.chart-wrap { position:relative; height:190px; }
+.chart-wrap { position:relative; height:220px; }
 
-.bottom-row { display:grid; grid-template-columns:1fr 1.5fr; gap:1.25rem; }
-.add-tx-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.4rem; }
+.bottom-row { display:grid; grid-template-columns:1fr; gap:1.25rem; }
+.add-tx-card { display:none; }
+.fab { position:fixed; bottom:2rem; right:2rem; width:52px; height:52px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:1.5rem; cursor:pointer; box-shadow:0 4px 20px rgba(45,106,79,0.4); transition:all 0.2s; z-index:50; display:flex; align-items:center; justify-content:center; }
+.fab:hover { transform:scale(1.08); box-shadow:0 6px 24px rgba(45,106,79,0.5); }
+.tx-modal { max-width:460px; }
 .tx-type-toggle { display:flex; background:var(--surface2); border-radius:8px; padding:3px; margin-bottom:1rem; }
 .tx-type-btn { flex:1; padding:0.5rem; border:none; background:none; border-radius:6px; font-family:'Instrument Sans',sans-serif; font-size:0.85rem; cursor:pointer; transition:all 0.15s; font-weight:500; color:var(--ink-muted); }
 .tx-type-btn.ingreso.active { background:var(--green); color:#fff; font-weight:700; }
@@ -285,33 +292,41 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
         </div>
       </div>
       <div class="kpi-row">
-        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Ingresos</div><div class="kpi-icon" style="background:var(--green-bg)">💰</div></div><div class="kpi-value text-green" id="kpiIng">$0</div><div class="kpi-sub" id="kpiIngSub">período</div></div>
-        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Gastos</div><div class="kpi-icon" style="background:var(--red-bg)">📤</div></div><div class="kpi-value text-red" id="kpiGas">$0</div><div class="kpi-sub">período</div></div>
-        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Utilidad</div><div class="kpi-icon" style="background:var(--gold-bg)">📈</div></div><div class="kpi-value" id="kpiUtil">$0</div><div class="kpi-sub" id="kpiMargen">Margen: 0%</div></div>
-        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Movimientos</div><div class="kpi-icon" style="background:var(--blue-bg)">🧾</div></div><div class="kpi-value" id="kpiMov">0</div><div class="kpi-sub" id="kpiMovSub">registrados</div></div>
+        <div class="kpi-card" style="border-left-color:var(--green)">
+          <div class="kpi-top"><div class="kpi-label">Ingresos</div></div>
+          <div class="kpi-value text-green" id="kpiIng">$0</div>
+          <div class="kpi-sub" id="kpiIngSub">período</div>
+        </div>
+        <div class="kpi-card" style="border-left-color:var(--red)">
+          <div class="kpi-top"><div class="kpi-label">Gastos</div></div>
+          <div class="kpi-value text-red" id="kpiGas">$0</div>
+          <div class="kpi-sub">período</div>
+        </div>
+        <div class="kpi-card" style="border-left-color:var(--gold)">
+          <div class="kpi-top"><div class="kpi-label">Utilidad Bruta</div></div>
+          <div class="kpi-value" id="kpiUtil">$0</div>
+          <div class="kpi-sub" id="kpiMargen">Margen: 0%</div>
+        </div>
+        <div class="kpi-card" style="border-left-color:var(--blue)">
+          <div class="kpi-top"><div class="kpi-label">Movimientos</div></div>
+          <div class="kpi-value" id="kpiMov">0</div>
+          <div class="kpi-sub" id="kpiMovSub">registrados</div>
+        </div>
       </div>
       <div class="charts-row">
-        <div class="card"><div class="card-title">Ingresos vs Gastos</div><div class="card-sub">Por mes</div><div class="chart-wrap"><canvas id="barChart"></canvas></div></div>
-        <div class="card"><div class="card-title">Gastos por Categoría</div><div class="card-sub">Distribución</div><div class="chart-wrap"><canvas id="pieChart"></canvas></div></div>
+        <div class="card"><div class="card-title">Ingresos vs Gastos</div><div class="card-sub">Últimos 6 meses</div><div class="chart-wrap"><canvas id="barChart"></canvas></div></div>
+        <div class="card"><div class="card-title">Gastos por Categoría</div><div class="card-sub">Distribución del período</div><div class="chart-wrap"><canvas id="pieChart"></canvas></div></div>
       </div>
       <div class="bottom-row">
-        <div class="add-tx-card">
-          <div class="card-title" style="margin-bottom:0.9rem">➕ Registrar movimiento</div>
-          <div class="tx-type-toggle">
-            <button class="tx-type-btn ingreso active" id="btnIngreso" onclick="setTxType('ingreso')">💰 Ingreso</button>
-            <button class="tx-type-btn gasto" id="btnGasto" onclick="setTxType('gasto')">📤 Gasto</button>
-          </div>
-          <div class="form-group"><label>Concepto</label><input type="text" id="txConcepto" placeholder="Ej: Venta del día, Renta..."></div>
-          <div class="form-row">
-            <div class="form-group"><label>Monto ($)</label><input type="number" id="txMonto" placeholder="0.00" min="0" step="0.01"></div>
-            <div class="form-group"><label>Categoría</label><select id="txCategoria"><option value="ventas">Ventas</option><option value="servicios">Servicios</option><option value="otro">Otro ingreso</option></select></div>
-          </div>
-          <div class="form-group"><label>Fecha</label><input type="date" id="txFecha"></div>
-          <button class="btn-submit" id="btnAddTx" onclick="addTransaction()">Guardar movimiento</button>
-        </div>
+        <div class="add-tx-card"></div>
         <div class="card">
-          <div class="card-title" style="margin-bottom:0.3rem">Movimientos recientes</div>
-          <div class="card-sub" id="recentCount" style="margin-bottom:0.9rem">0 registros</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.9rem">
+            <div>
+              <div class="card-title">Movimientos recientes</div>
+              <div class="card-sub" id="recentCount">0 registros</div>
+            </div>
+            <button onclick="openTxModal()" style="padding:0.45rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer">+ Registrar</button>
+          </div>
           <div class="tx-list" id="recentList"><div class="empty"><div class="empty-icon">📝</div><h4>Sin movimientos</h4><p>Registra tu primer ingreso o gasto</p></div></div>
         </div>
       </div>
@@ -648,6 +663,34 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
   </main>
 </div>
 
+<!-- FAB -->
+<button class="fab" onclick="openTxModal()" title="Registrar movimiento">+</button>
+
+<!-- Transaction Modal -->
+<div class="modal-overlay" id="txModal">
+  <div class="modal tx-modal">
+    <h3>Registrar movimiento</h3>
+    <div class="tx-type-toggle" style="margin-bottom:1rem">
+      <button class="tx-type-btn ingreso active" id="btnIngreso" onclick="setTxType('ingreso')">↑ Ingreso</button>
+      <button class="tx-type-btn gasto" id="btnGasto" onclick="setTxType('gasto')">↓ Gasto</button>
+    </div>
+    <div class="form-group"><label>Concepto</label><input type="text" id="txConcepto" placeholder="Ej: Venta del día, Renta..."></div>
+    <div class="form-row">
+      <div class="form-group"><label>Monto ($)</label><input type="number" id="txMonto" placeholder="0.00" min="0" step="0.01"></div>
+      <div class="form-group"><label>Categoría</label>
+        <select id="txCategoria" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.88rem;color:var(--ink);background:var(--surface);outline:none">
+          <option value="ventas">Ventas</option><option value="servicios">Servicios</option><option value="mercancia">Mercancía</option><option value="renta">Renta</option><option value="nomina">Nómina</option><option value="marketing">Marketing</option><option value="servicios_pub">Servicios públicos</option><option value="transporte">Transporte</option><option value="otro">Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Fecha</label><input type="date" id="txFecha"></div>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeTxModal()">Cancelar</button>
+      <button class="btn-full" id="btnAddTx" onclick="addTransaction()">Guardar movimiento</button>
+    </div>
+  </div>
+</div>
+
 <!-- New Biz Modal -->
 <div class="modal-overlay" id="bizModal">
   <div class="modal">
@@ -746,6 +789,15 @@ async function loadBusinesses() {
   renderBizList(); renderDashboard();
 }
 
+function openTxModal() {
+  document.getElementById('txModal').classList.add('show');
+  document.getElementById('txConcepto').focus();
+  // Set today's date
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('txFecha').value = today;
+}
+function closeTxModal() { document.getElementById('txModal').classList.remove('show'); }
+
 function openBizModal() { document.getElementById('bizModal').classList.add('show'); document.getElementById('bizName').focus(); }
 function closeBizModal() { document.getElementById('bizModal').classList.remove('show'); }
 
@@ -807,6 +859,7 @@ async function addTransaction() {
   S.transactions.unshift(data);
   document.getElementById('txConcepto').value='';
   document.getElementById('txMonto').value='';
+  closeTxModal();
   renderDashboard();
   showToast(`✅ ${txType==='ingreso'?'Ingreso':'Gasto'} guardado`, 'ok');
 }
