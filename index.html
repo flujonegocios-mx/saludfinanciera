@@ -332,6 +332,19 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
           <option value="todos">Todos</option><option value="ingreso">Solo ingresos</option><option value="gasto">Solo gastos</option>
         </select>
       </div>
+
+      <!-- Importaciones -->
+      <div class="card" style="margin-bottom:1.25rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.9rem">
+          <div>
+            <div class="card-title">📥 Historial de importaciones</div>
+            <div class="card-sub">Archivos Excel subidos — puedes borrar todos los registros de una importación</div>
+          </div>
+        </div>
+        <div id="importsList"><div style="color:var(--ink-muted);font-size:0.83rem">Cargando...</div></div>
+      </div>
+
+      <!-- Transacciones -->
       <div class="card"><div class="tx-list" style="max-height:none" id="histList"></div></div>
     </div>
 
@@ -894,7 +907,7 @@ function showPage(page,btn) {
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById(`page-${page}`).classList.add('active'); btn.classList.add('active');
   if(page==='pl')renderPL(S.plMonth);
-  if(page==='historial')renderHistorial();
+  if(page==='historial'){renderHistorial();loadImports();}
   if(page==='reporte')initReportePage();
 
 }
@@ -1082,24 +1095,31 @@ async function runImport() {
     const fecha = parseDate(row[fechaIdx]);
     const concepto = String(row[conceptoIdx] || '').trim();
     const monto = parseFloat(String(row[montoIdx]).replace(/[,$]/g,''));
-
     if (!fecha || !concepto || isNaN(monto) || monto <= 0) { skip++; continue; }
-
     let tipo = tipoDefault;
     if (tipoIdx >= 0 && row[tipoIdx]) {
       const t = String(row[tipoIdx]).toLowerCase();
       if (t.includes('gasto') || t.includes('egreso') || t.includes('expense')) tipo = 'gasto';
       else if (t.includes('ingreso') || t.includes('venta') || t.includes('income')) tipo = 'ingreso';
     }
-
     const categoria = catIdx >= 0 ? String(row[catIdx]||'').toLowerCase().trim() : (tipo === 'ingreso' ? 'ventas' : 'otro');
-
     batch.push({ business_id: S.activeBizId, user_id: S.user.id, tipo, concepto, monto, categoria: categoria||'otro', fecha });
     ok++;
   }
 
   if (batch.length > 0) {
-    // Insert in chunks of 100
+    // 1. Create import record first
+    const filename = document.getElementById('fileInput')?.files?.[0]?.name || 'archivo.xlsx';
+    const { data: importRecord, error: impErr } = await sb.from('imports')
+      .insert({ user_id: S.user.id, business_id: S.activeBizId, filename, record_count: ok })
+      .select().single();
+
+    if (!impErr && importRecord) {
+      // 2. Tag all transactions with import_id
+      batch.forEach(t => t.import_id = importRecord.id);
+    }
+
+    // 3. Insert in chunks of 100
     for (let i = 0; i < batch.length; i += 100) {
       await sb.from('transactions').insert(batch.slice(i, i+100));
     }
@@ -1478,6 +1498,75 @@ function generarForecast() {
     document.getElementById('forecastResult').style.display = 'block';
     document.getElementById('btnForecast').disabled = false;
   }, 600);
+}
+
+// ── IMPORTS HISTORY ──────────────────────────────────────────
+async function loadImports() {
+  const el = document.getElementById('importsList');
+  if (!el) return;
+  const { data, error } = await sb.from('imports')
+    .select('*')
+    .eq('business_id', S.activeBizId)
+    .order('created_at', { ascending: false });
+
+  if (error || !data || data.length === 0) {
+    el.innerHTML = '<div style="color:var(--ink-muted);font-size:0.83rem;padding:0.5rem 0">No hay importaciones registradas para este negocio.</div>';
+    return;
+  }
+
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:0.5rem 0.75rem;color:var(--ink-muted);font-weight:600">Archivo</th>
+          <th style="text-align:center;padding:0.5rem 0.75rem;color:var(--ink-muted);font-weight:600">Registros</th>
+          <th style="text-align:left;padding:0.5rem 0.75rem;color:var(--ink-muted);font-weight:600">Fecha</th>
+          <th style="text-align:center;padding:0.5rem 0.75rem;color:var(--ink-muted);font-weight:600">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map(imp => `
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:0.6rem 0.75rem">
+              <div style="font-weight:500">📊 ${imp.filename||'archivo.xlsx'}</div>
+            </td>
+            <td style="padding:0.6rem 0.75rem;text-align:center">
+              <span style="background:var(--blue-bg);color:var(--blue);padding:0.2rem 0.6rem;border-radius:20px;font-size:0.75rem;font-weight:600">${imp.record_count} registros</span>
+            </td>
+            <td style="padding:0.6rem 0.75rem;color:var(--ink-muted);font-size:0.8rem">
+              ${new Date(imp.created_at).toLocaleDateString('es-MX', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+            </td>
+            <td style="padding:0.6rem 0.75rem;text-align:center">
+              <button onclick="deleteImport('${imp.id}', '${(imp.filename||'archivo').replace(/'/g,'')}', ${imp.record_count})"
+                style="padding:0.3rem 0.75rem;border:1.5px solid var(--red);border-radius:7px;background:transparent;color:var(--red);font-family:'Instrument Sans',sans-serif;font-size:0.75rem;cursor:pointer;transition:all 0.15s"
+                onmouseover="this.style.background='var(--red-bg)'" onmouseout="this.style.background='transparent'">
+                🗑️ Borrar importación
+              </button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function deleteImport(importId, filename, count) {
+  if (!confirm(`¿Borrar la importación "${filename}" y sus ${count} registros?\n\nEsta acción no se puede deshacer.`)) return;
+
+  // Delete all transactions linked to this import
+  const { error: txErr } = await sb.from('transactions')
+    .delete()
+    .eq('import_id', importId)
+    .eq('user_id', S.user.id);
+
+  if (txErr) return showToast('Error al borrar los registros', 'err');
+
+  // Delete import record
+  await sb.from('imports').delete().eq('id', importId);
+
+  showToast(`✅ Importación "${filename}" borrada`, 'ok');
+  await loadTransactions();
+  renderHistorial();
+  renderDashboard();
+  loadImports();
 }
 
 // ── REPORTE PDF ──────────────────────────────────────────
