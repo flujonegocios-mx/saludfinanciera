@@ -243,13 +243,34 @@ aside.sidebar { width:260px; background:var(--sidebar-bg); display:flex; flex-di
     <div>
       <div class="sidebar-section-title">Menú</div>
       <nav style="display:flex;flex-direction:column;gap:0.2rem">
-        <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</button>
-        <button class="nav-item" onclick="showPage('pl',this)"><span class="nav-icon">📋</span>Estado de Resultados</button>
-        <button class="nav-item" onclick="showPage('historial',this)"><span class="nav-icon">🧾</span>Historial</button>
-        <button class="nav-item" onclick="showPage('importar',this)"><span class="nav-icon">📥</span>Importar Excel</button>
-        <button class="nav-item" onclick="showPage('insights',this)"><span class="nav-icon">✨</span>Insights IA</button>
-        <button class="nav-item" onclick="showPage('forecast',this)"><span class="nav-icon">🔮</span>Forecast</button>
-        <button class="nav-item" onclick="showPage('reporte',this)"><span class="nav-icon">📄</span>Reporte PDF</button>
+        <button class="nav-item active" onclick="showPage('dashboard',this)">
+          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="7" width="4" height="6" rx="1" fill="currentColor" opacity="0.7"/><rect x="6" y="4" width="4" height="9" rx="1" fill="currentColor"/><rect x="11" y="1" width="2" height="12" rx="1" fill="currentColor" opacity="0.5"/></svg></span>
+          Dashboard
+        </button>
+        <button class="nav-item" onclick="showPage('pl',this)">
+          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="1.5" rx="0.75" fill="currentColor"/><rect x="2" y="5.5" width="7" height="1.5" rx="0.75" fill="currentColor" opacity="0.6"/><rect x="2" y="9" width="9" height="1.5" rx="0.75" fill="currentColor" opacity="0.8"/></svg></span>
+          Estado de Resultados
+        </button>
+        <button class="nav-item" onclick="showPage('historial',this)">
+          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M7 4.5V7L8.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+          Historial
+        </button>
+        <button class="nav-item" onclick="showPage('importar',this)">
+          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v7M4.5 6.5L7 9l2.5-2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10.5h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+          Importar Excel
+        </button>
+        <button class="nav-item" onclick="showPage('insights',this)">
+          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2" fill="currentColor"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>
+          Insights
+        </button>
+        <button class="nav-item" onclick="showPage('forecast',this)">
+          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 10.5L5 6.5L8 8.5L12.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          Forecast
+        </button>
+        <button class="nav-item" onclick="showPage('reporte',this)">
+          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2.5" y="1.5" width="9" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M5 5h4M5 7.5h4M5 10h2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+          Reporte PDF
+        </button>
       </nav>
     </div>
     <div>
