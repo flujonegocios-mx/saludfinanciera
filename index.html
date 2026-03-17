@@ -391,10 +391,16 @@ aside.sidebar.visible { display:flex; }
             </div>
           </div>
 
-          <!-- Meses (multi-select) -->
-          <div style="flex:1;min-width:200px">
+          <!-- Meses (dropdown multi-select) -->
+          <div style="position:relative">
             <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--ink-muted);margin-bottom:0.5rem">Meses <span id="mesesCount" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink-faint,#b8b2aa)"></span></div>
-            <div id="histMesesWrap" style="display:flex;flex-wrap:wrap;gap:0.35rem"></div>
+            <button onclick="toggleMesesDropdown()" id="mesesBtn" style="display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0.85rem;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);font-family:'Instrument Sans',sans-serif;font-size:0.78rem;color:var(--ink-muted);cursor:pointer;transition:all 0.12s;white-space:nowrap" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="if(!document.getElementById('mesesDropdown').classList.contains('open'))this.style.borderColor='var(--border)'">
+              <span id="mesesBtnLabel">Todos los meses</span>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div id="mesesDropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:0.5rem;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:60;max-height:260px;overflow-y:auto">
+              <div id="histMesesWrap" style="display:flex;flex-direction:column;gap:1px"></div>
+            </div>
           </div>
 
           <!-- Día específico -->
@@ -1012,43 +1018,53 @@ function setHistTipo(tipo, btn) {
   renderHistorial();
 }
 
-function toggleHistMes(mes, btn) {
-  if (histMeses.has(mes)) { histMeses.delete(mes); btn.classList.remove('active'); }
-  else { histMeses.add(mes); btn.classList.add('active'); }
-  const count = histMeses.size;
-  const el = document.getElementById('mesesCount');
-  if (el) el.textContent = count > 0 ? `— ${count} seleccionado${count>1?'s':''}` : '';
+function toggleMesesDropdown() {
+  const dd = document.getElementById('mesesDropdown');
+  const btn = document.getElementById('mesesBtn');
+  if (!dd || !btn) return;
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  btn.style.borderColor = isOpen ? 'var(--border)' : 'var(--accent)';
+  btn.style.color = isOpen ? 'var(--ink-muted)' : 'var(--accent)';
+}
+
+function toggleHistMes(mes, el) {
+  if (histMeses.has(mes)) {
+    histMeses.delete(mes);
+    el.querySelector('.mes-check').textContent = '';
+    el.style.background = 'none';
+    el.style.color = 'var(--ink)';
+  } else {
+    histMeses.add(mes);
+    el.querySelector('.mes-check').textContent = '✓';
+    el.style.background = 'var(--green-bg)';
+    el.style.color = 'var(--green)';
+  }
+  updateMesesBtn();
   renderHistorial();
 }
 
-function renderHistorial() {
-  const diaFilter = document.getElementById('histDiaFilter')?.value || '';
-  let all = [...S.transactions];
-  if (histTipo !== 'todos') all = all.filter(t => t.tipo === histTipo);
-  if (histMeses.size > 0) all = all.filter(t => histMeses.has(t.fecha.substring(0,7)));
-  if (diaFilter) all = all.filter(t => t.fecha === diaFilter);
-  const active = histTipo !== 'todos' || histMeses.size > 0 || diaFilter;
-  document.getElementById('histSub').textContent = `${all.length} movimientos${active ? ' (filtrado)' : ''}`;
-  document.getElementById('histList').innerHTML = all.length
-    ? all.map(t => `<div class="tx-item"><div class="tx-dot" style="background:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}"></div><div class="tx-info"><div class="tx-concepto">${t.concepto}</div><div class="tx-meta">${fmtDate(t.fecha)} · ${CAT_LABELS[t.categoria]||t.categoria||t.tipo}</div></div><div class="tx-amount ${t.tipo}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div><button class="tx-del" onclick="deleteTransaction('${t.id}')">✕</button></div>`).join('')
-    : `<div class="empty"><div class="empty-icon">🧾</div><h4>Sin resultados</h4><p>No hay movimientos con los filtros seleccionados</p></div>`;
+function updateMesesBtn() {
+  const count = histMeses.size;
+  const label = document.getElementById('mesesBtnLabel');
+  if (label) label.textContent = count === 0 ? 'Todos los meses' : `${count} mes${count>1?'es':''} seleccionado${count>1?'s':''}`;
 }
 
 function populateHistMeses() {
   const wrap = document.getElementById('histMesesWrap');
   if (!wrap) return;
-  const MNAMES = {'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'};
+  const MNAMES = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
   const meses = [...new Set(S.transactions.map(t => t.fecha.substring(0,7)))].sort().reverse();
   wrap.innerHTML = meses.map(m => {
     const [y, mo] = m.split('-');
     const isActive = histMeses.has(m);
-    return `<button class="hist-mes-btn${isActive?' active':''}" onclick="toggleHistMes('${m}',this)">${MNAMES[mo]||mo} ${y}</button>`;
+    return `<div onclick="toggleHistMes('${m}',this)" style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.75rem;border-radius:7px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:0.82rem;transition:background 0.1s;background:${isActive?'var(--green-bg)':'none'};color:${isActive?'var(--green)':'var(--ink)'}">
+      <span>${MNAMES[mo]||mo} ${y}</span>
+      <span class="mes-check" style="font-size:0.75rem;font-weight:700;color:var(--green)">${isActive?'✓':''}</span>
+    </div>`;
   }).join('');
-  const count = histMeses.size;
-  const el = document.getElementById('mesesCount');
-  if (el) el.textContent = count > 0 ? `— ${count} seleccionado${count>1?'s':''}` : '';
+  updateMesesBtn();
 }
-
 function clearHistFilters() {
   histTipo = 'todos';
   histMeses.clear();
@@ -1057,8 +1073,6 @@ function clearHistFilters() {
   if (todosBtn) todosBtn.classList.add('active');
   const diaEl = document.getElementById('histDiaFilter');
   if (diaEl) diaEl.value = '';
-  const countEl = document.getElementById('mesesCount');
-  if (countEl) countEl.textContent = '';
   populateHistMeses();
   renderHistorial();
 }
@@ -1090,6 +1104,26 @@ function loadSheetJS(cb) {
 }
 
 // Drag & drop
+document.addEventListener('click', e => {
+  const dd = document.getElementById('mesesDropdown');
+  const btn = document.getElementById('mesesBtn');
+  if (dd && btn && dd.style.display !== 'none' && !dd.contains(e.target) && !btn.contains(e.target)) {
+    dd.style.display = 'none';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--ink-muted)';
+  }
+});
+
+document.addEventListener('click', e => {
+  const dd = document.getElementById('mesesDropdown');
+  const btn = document.getElementById('mesesBtn');
+  if (dd && btn && dd.style.display !== 'none' && !dd.contains(e.target) && !btn.contains(e.target)) {
+    dd.style.display = 'none';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--ink-muted)';
+  }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   const dz = document.getElementById('dropZone');
   if (!dz) return;
