@@ -830,14 +830,23 @@ async function init() {
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value;
-  if (!email || !pass) return showAuthMsg('Completa todos los campos');
+  if (!email) return showAuthMsg('Escribe tu correo electrónico.');
+  if (!pass) return showAuthMsg('Escribe tu contraseña.');
+  if (!isOnline()) return showAuthMsg('Sin conexión a internet. Verifica tu red.');
   const btn = document.getElementById('btnLogin');
-  btn.disabled = true; btn.textContent = 'Entrando...';
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  btn.disabled = false; btn.textContent = 'Entrar →';
-  if (error) return showAuthMsg('Correo o contraseña incorrectos');
-  S.user = data.user;
-  await checkAccessAndEnter();
+  btn.disabled = true; btn.textContent = 'Verificando...';
+  try {
+    const { data, error } = await withTimeout(sb.auth.signInWithPassword({ email, password: pass }));
+    if (error) return showAuthMsg(getErrorMsg(error));
+    S.user = data.user;
+    await checkAccessAndEnter();
+  } catch(e) {
+    showAuthMsg(e.message === 'timeout'
+      ? 'El servidor tardó demasiado. Verifica tu internet e intenta de nuevo.'
+      : getErrorMsg(e));
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar →';
+  }
 }
 
 async function checkAccessAndEnter() {
@@ -946,21 +955,29 @@ async function addTransaction() {
   const monto = parseFloat(document.getElementById('txMonto').value);
   const categoria = document.getElementById('txCategoria').value;
   const fecha = document.getElementById('txFecha').value;
-  if (!concepto) return showToast('Escribe un concepto', 'err');
-  if (!monto || monto<=0) return showToast('Monto inválido', 'err');
-  if (!fecha) return showToast('Selecciona una fecha', 'err');
-  if (!S.activeBizId) return showToast('Crea un negocio primero', 'err');
+  if (!concepto) return showToast('Escribe un concepto para el movimiento.', 'err');
+  if (!monto || monto <= 0) return showToast('El monto debe ser mayor a cero.', 'err');
+  if (!fecha) return showToast('Selecciona la fecha del movimiento.', 'err');
+  if (!S.activeBizId) return showToast('Primero crea un negocio desde el menú lateral.', 'err');
+  if (!isOnline()) return showToast('Sin conexión. Verifica tu internet e intenta de nuevo.', 'err');
   const btn = document.getElementById('btnAddTx');
-  btn.disabled=true; btn.textContent='Guardando...';
-  const { data, error } = await sb.from('transactions').insert({ business_id:S.activeBizId, user_id:S.user.id, tipo:txType, concepto, monto, categoria, fecha }).select().single();
-  btn.disabled=false; btn.textContent='Guardar movimiento';
-  if (error) return showToast('Error al guardar', 'err');
-  S.transactions.unshift(data);
-  document.getElementById('txConcepto').value='';
-  document.getElementById('txMonto').value='';
-  closeTxModal();
-  renderDashboard();
-  showToast(`✅ ${txType==='ingreso'?'Ingreso':'Gasto'} guardado`, 'ok');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    const { data, error } = await withTimeout(
+      sb.from('transactions').insert({ business_id:S.activeBizId, user_id:S.user.id, tipo:txType, concepto, monto, categoria, fecha }).select().single()
+    );
+    if (error) return showToast(getErrorMsg(error), 'err');
+    S.transactions.unshift(data);
+    document.getElementById('txConcepto').value = '';
+    document.getElementById('txMonto').value = '';
+    closeTxModal();
+    renderDashboard();
+    showToast(`✅ ${txType==='ingreso'?'Ingreso':'Gasto'} guardado correctamente`, 'ok');
+  } catch(e) {
+    showToast(e.message === 'timeout' ? 'El servidor tardó demasiado. Intenta de nuevo.' : getErrorMsg(e), 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar movimiento';
+  }
 }
 
 async function deleteTransaction(id) {
@@ -1298,7 +1315,31 @@ function showPage(page,btn) {
 
 }
 
-function showToast(msg,type='') { const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast show ${type}`; setTimeout(()=>t.classList.remove('show'),2800); }
+function showToast(msg,type='',duration=2800) { const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast show ${type}`; clearTimeout(window._toastTimer); window._toastTimer=setTimeout(()=>t.classList.remove('show'),duration); }
+
+function isOnline() { return navigator.onLine; }
+
+function getErrorMsg(error) {
+  if (!isOnline()) return 'Sin conexión a internet. Verifica tu red e intenta de nuevo.';
+  const msg = error?.message?.toLowerCase() || '';
+  if (msg.includes('invalid login') || msg.includes('invalid credentials') || msg.includes('email not confirmed')) return 'Correo o contraseña incorrectos.';
+  if (msg.includes('email') && msg.includes('required')) return 'El correo es requerido.';
+  if (msg.includes('too many requests') || msg.includes('rate limit')) return 'Demasiados intentos. Espera un momento e intenta de nuevo.';
+  if (msg.includes('network') || msg.includes('fetch') || msg.includes('failed')) return 'Error de conexión. Verifica tu internet.';
+  if (msg.includes('duplicate') || msg.includes('unique')) return 'Este registro ya existe.';
+  if (msg.includes('timeout')) return 'El servidor tardó demasiado. Intenta de nuevo.';
+  if (msg.includes('jwt') || msg.includes('session') || msg.includes('token')) return 'Tu sesión expiró. Inicia sesión nuevamente.';
+  return 'Algo salió mal. Intenta de nuevo en un momento.';
+}
+
+async function withTimeout(promise, ms=10000) {
+  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));
+  return Promise.race([promise, timeout]);
+}
+
+// Detect connection changes
+window.addEventListener('online', () => showToast('✅ Conexión restaurada', 'ok'));
+window.addEventListener('offline', () => showToast('Sin conexión a internet', 'err', 5000));
 
 
 // ── IMPORT EXCEL ──────────────────────────────────────────────
@@ -1488,8 +1529,9 @@ async function runImport() {
   const catIdx = parseInt(document.getElementById('map_categoria')?.value || -1);
   const tipoDefault = document.getElementById('map_tipo_default')?.value || 'ingreso';
 
-  if (fechaIdx < 0 || conceptoIdx < 0 || montoIdx < 0) return showToast('Conecta los campos obligatorios (Fecha, Concepto, Monto)', 'err');
-  if (!S.activeBizId) return showToast('Selecciona un negocio primero', 'err');
+  if (fechaIdx < 0 || conceptoIdx < 0 || montoIdx < 0) return showToast('Conecta los campos obligatorios: Fecha, Concepto y Monto.', 'err');
+  if (!S.activeBizId) return showToast('Selecciona un negocio desde el menú lateral antes de importar.', 'err');
+  if (!isOnline()) return showToast('Sin conexión a internet. Verifica tu red e intenta de nuevo.', 'err');
 
   const btn = document.querySelector('#importStep2 .btn-submit');
   btn.disabled = true; btn.textContent = 'Importando...';
@@ -1532,10 +1574,16 @@ async function runImport() {
     await loadTransactions();
   }
 
+  if (batch.length === 0) {
+    btn.disabled = false; btn.textContent = 'Importar datos →';
+    return showToast(`No se encontraron datos válidos. Se omitieron ${skip} filas — verifica que las columnas Fecha, Concepto y Monto tengan datos correctos.`, 'err', 5000);
+  }
+
   btn.disabled = false;
   document.getElementById('importStep2').style.display = 'none';
   document.getElementById('importStep3').style.display = 'block';
-  document.getElementById('importSummary').textContent = `Se importaron ${ok} movimientos correctamente.${skip > 0 ? ` Se omitieron ${skip} filas con datos incompletos.` : ''}`;
+  const msg = `Se importaron ${ok} movimiento${ok!==1?'s':''} correctamente.${skip > 0 ? ` Se omitieron ${skip} fila${skip!==1?'s':''} con datos incompletos o inválidos.` : ''}`;
+  document.getElementById('importSummary').textContent = msg;
   renderDashboard();
 }
 
