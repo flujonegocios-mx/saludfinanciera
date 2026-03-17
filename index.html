@@ -1208,7 +1208,7 @@ function renderPL() {
   const now = new Date();
   const currentYear = now.getFullYear().toString();
   const monthSet = new Set(S.transactions.map(t => t.fecha.substring(0,7)));
-  const allMonths = [...monthSet].sort();
+  const allMonths = [...monthSet].sort().reverse();
 
   // Build pills
   const plSubEl = document.getElementById('plSub');
