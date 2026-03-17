@@ -63,7 +63,8 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
 .app-screen { display:none; min-height:100vh; }
 .app-screen.show { display:flex; }
 
-aside.sidebar { width:260px; background:var(--sidebar-bg); display:flex; flex-direction:column; gap:0; padding:1.25rem 1rem; position:fixed; top:0; left:0; height:100vh; overflow-y:auto; z-index:40; }
+aside.sidebar { width:260px; background:var(--sidebar-bg); display:none; flex-direction:column; gap:0; padding:1.25rem 1rem; position:fixed; top:0; left:0; height:100vh; overflow-y:auto; z-index:40; }
+aside.sidebar.visible { display:flex; }
 .sidebar-logo { display:flex; align-items:center; gap:0.6rem; padding-bottom:1.25rem; border-bottom:1px solid rgba(255,255,255,0.08); }
 .sidebar-logo-icon { width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
 .sidebar-logo-text { font-family:'Playfair Display',serif; font-size:1.15rem; font-weight:600; color:#fff; letter-spacing:-0.01em; }
@@ -120,7 +121,8 @@ aside.sidebar { width:260px; background:var(--sidebar-bg); display:flex; flex-di
 
 .bottom-row { display:grid; grid-template-columns:1fr; gap:1.25rem; }
 .add-tx-card { display:none; }
-.fab { position:fixed; bottom:2rem; right:2rem; width:52px; height:52px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:1.5rem; cursor:pointer; box-shadow:0 4px 20px rgba(45,106,79,0.4); transition:all 0.2s; z-index:50; display:flex; align-items:center; justify-content:center; }
+.fab { position:fixed; bottom:2rem; right:2rem; width:52px; height:52px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:1.5rem; cursor:pointer; box-shadow:0 4px 20px rgba(45,106,79,0.4); transition:all 0.2s; z-index:50; display:none; align-items:center; justify-content:center; }
+.fab.visible { display:flex; }
 .fab:hover { transform:scale(1.08); box-shadow:0 6px 24px rgba(45,106,79,0.5); }
 .tx-modal { max-width:460px; }
 
@@ -355,9 +357,31 @@ aside.sidebar { width:260px; background:var(--sidebar-bg); display:flex; flex-di
     <div class="page" id="page-historial">
       <div class="topbar">
         <div><div class="page-title">Historial completo</div><div class="page-subtitle" id="histSub">Todos los movimientos</div></div>
-        <select id="histFilter" onchange="renderHistorial()" style="padding:0.4rem 0.75rem;border:1px solid var(--border);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;background:var(--surface)">
-          <option value="todos">Todos</option><option value="ingreso">Solo ingresos</option><option value="gasto">Solo gastos</option>
-        </select>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card" style="margin-bottom:1.25rem;padding:1rem 1.4rem">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <label style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-muted)">Tipo</label>
+            <select id="histFilter" onchange="renderHistorial()" style="padding:0.35rem 0.7rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;background:var(--surface);color:var(--ink);outline:none">
+              <option value="todos">Todos</option>
+              <option value="ingreso">Ingresos</option>
+              <option value="gasto">Gastos</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <label style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-muted)">Mes</label>
+            <select id="histMesFilter" onchange="renderHistorial()" style="padding:0.35rem 0.7rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;background:var(--surface);color:var(--ink);outline:none">
+              <option value="">Todos los meses</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <label style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-muted)">Día</label>
+            <input type="date" id="histDiaFilter" onchange="renderHistorial()" style="padding:0.35rem 0.7rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;background:var(--surface);color:var(--ink);outline:none">
+          </div>
+          <button onclick="clearHistFilters()" style="padding:0.35rem 0.8rem;border:1.5px solid var(--border);border-radius:7px;background:none;font-family:'Instrument Sans',sans-serif;font-size:0.78rem;color:var(--ink-muted);cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--ink-muted)'" onmouseout="this.style.borderColor='var(--border)'">Limpiar filtros</button>
+        </div>
       </div>
 
       <!-- Importaciones -->
@@ -772,6 +796,8 @@ async function checkAccessAndEnter() {
 
 async function enterApp(profile) {
   document.getElementById('appScreen').classList.add('show');
+  document.querySelector('.sidebar').classList.add('visible');
+  document.querySelector('.fab').classList.add('visible');
   const name = profile?.name || S.user.user_metadata?.name || S.user.email.split('@')[0];
   document.getElementById('userAvatar').textContent = name[0].toUpperCase();
   document.getElementById('userName').textContent = name;
@@ -791,6 +817,8 @@ async function doLogout() {
   document.getElementById('appScreen').classList.remove('show');
   document.getElementById('blockedScreen').classList.remove('show');
   document.getElementById('authScreen').classList.add('show');
+  document.querySelector('.sidebar').classList.remove('visible');
+  document.querySelector('.fab').classList.remove('visible');
 }
 
 // Businesses
@@ -960,10 +988,37 @@ function renderPL(filterYM=null) {
 }
 
 function renderHistorial() {
-  const filter=document.getElementById('histFilter')?.value||'todos';
-  let all=[...S.transactions]; if(filter!=='todos')all=all.filter(t=>t.tipo===filter);
-  document.getElementById('histSub').textContent=`${all.length} movimientos`;
-  document.getElementById('histList').innerHTML=all.length?all.map(t=>`<div class="tx-item"><div class="tx-dot" style="background:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}"></div><div class="tx-info"><div class="tx-concepto">${t.concepto}</div><div class="tx-meta">${fmtDate(t.fecha)} · ${CAT_LABELS[t.categoria]||t.categoria||t.tipo}</div></div><div class="tx-amount ${t.tipo}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div><button class="tx-del" onclick="deleteTransaction('${t.id}')">✕</button></div>`).join(''):`<div class="empty"><div class="empty-icon">🧾</div><h4>Sin historial</h4><p>Tus movimientos aparecerán aquí</p></div>`;
+  const filter = document.getElementById('histFilter')?.value || 'todos';
+  const mesFilter = document.getElementById('histMesFilter')?.value || '';
+  const diaFilter = document.getElementById('histDiaFilter')?.value || '';
+
+  let all = [...S.transactions];
+  if (filter !== 'todos') all = all.filter(t => t.tipo === filter);
+  if (mesFilter) all = all.filter(t => t.fecha.startsWith(mesFilter));
+  if (diaFilter) all = all.filter(t => t.fecha === diaFilter);
+
+  document.getElementById('histSub').textContent = `${all.length} movimientos${mesFilter||diaFilter ? ' (filtrado)' : ''}`;
+  document.getElementById('histList').innerHTML = all.length
+    ? all.map(t => `<div class="tx-item"><div class="tx-dot" style="background:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}"></div><div class="tx-info"><div class="tx-concepto">${t.concepto}</div><div class="tx-meta">${fmtDate(t.fecha)} · ${CAT_LABELS[t.categoria]||t.categoria||t.tipo}</div></div><div class="tx-amount ${t.tipo}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div><button class="tx-del" onclick="deleteTransaction('${t.id}')">✕</button></div>`).join('')
+    : `<div class="empty"><div class="empty-icon">🧾</div><h4>Sin resultados</h4><p>No hay movimientos con los filtros seleccionados</p></div>`;
+}
+
+function populateHistMeses() {
+  const sel = document.getElementById('histMesFilter');
+  if (!sel) return;
+  const meses = [...new Set(S.transactions.map(t => t.fecha.substring(0,7)))].sort().reverse();
+  const MNAMES = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Todos los meses</option>' +
+    meses.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">${MNAMES[mo]||mo} ${y}</option>`; }).join('');
+  if (current) sel.value = current;
+}
+
+function clearHistFilters() {
+  document.getElementById('histFilter').value = 'todos';
+  document.getElementById('histMesFilter').value = '';
+  document.getElementById('histDiaFilter').value = '';
+  renderHistorial();
 }
 
 function showPage(page,btn) {
@@ -971,7 +1026,7 @@ function showPage(page,btn) {
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById(`page-${page}`).classList.add('active'); btn.classList.add('active');
   if(page==='pl')renderPL(S.plMonth);
-  if(page==='historial'){renderHistorial();loadImports();}
+  if(page==='historial'){populateHistMeses();renderHistorial();loadImports();}
   if(page==='reporte')initReportePage();
 
 }
