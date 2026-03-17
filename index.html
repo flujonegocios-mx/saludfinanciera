@@ -1018,6 +1018,22 @@ function setHistTipo(tipo, btn) {
   renderHistorial();
 }
 
+function renderHistorial() {
+  const diaFilter = document.getElementById('histDiaFilter')?.value || '';
+  let all = [...S.transactions];
+  if (histTipo !== 'todos') all = all.filter(t => t.tipo === histTipo);
+  if (histMeses.size > 0) all = all.filter(t => histMeses.has(t.fecha.substring(0,7)));
+  if (diaFilter) all = all.filter(t => t.fecha === diaFilter);
+  const active = histTipo !== 'todos' || histMeses.size > 0 || diaFilter;
+  const sub = document.getElementById('histSub');
+  if (sub) sub.textContent = `${all.length} movimiento${all.length!==1?'s':''}${active?' (filtrado)':''}`;
+  const list = document.getElementById('histList');
+  if (!list) return;
+  list.innerHTML = all.length
+    ? all.map(t => `<div class="tx-item"><div class="tx-dot" style="background:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}"></div><div class="tx-info"><div class="tx-concepto">${t.concepto}</div><div class="tx-meta">${fmtDate(t.fecha)} · ${CAT_LABELS[t.categoria]||t.categoria||t.tipo}</div></div><div class="tx-amount ${t.tipo}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div><button class="tx-del" onclick="deleteTransaction('${t.id}')">✕</button></div>`).join('')
+    : `<div class="empty"><div class="empty-icon">🧾</div><h4>Sin resultados</h4><p>No hay movimientos con los filtros seleccionados</p></div>`;
+}
+
 function toggleMesesDropdown() {
   const dd = document.getElementById('mesesDropdown');
   const btn = document.getElementById('mesesBtn');
