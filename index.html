@@ -372,7 +372,7 @@ aside.sidebar.visible { display:flex; }
 
     <!-- P&L -->
     <div class="page" id="page-pl">
-      <div class="topbar"><div><div class="page-title">Estado de Resultados</div><div class="page-subtitle">P&L por período</div></div></div>
+      <div class="topbar"><div><div class="page-title">Estado de Resultados</div><div class="page-subtitle" id="plSub">Todo el historial</div></div></div>
       <div class="month-pills" id="monthPills"></div>
       <div class="pl-container"><table class="pl-table"><thead><tr><th>Concepto</th><th>Monto</th><th>% Ingreso</th></tr></thead><tbody id="plBody"></tbody></table></div>
     </div>
@@ -1199,25 +1199,81 @@ function renderRecent(filtered) {
   document.getElementById('recentList').innerHTML=recent.length?recent.map(t=>`<div class="tx-item"><div class="tx-dot" style="background:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}"></div><div class="tx-info"><div class="tx-concepto">${t.concepto}</div><div class="tx-meta">${fmtDate(t.fecha)} · ${CAT_LABELS[t.categoria]||t.categoria||t.tipo}</div></div><div class="tx-amount ${t.tipo}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div><button class="tx-del" onclick="deleteTransaction('${t.id}')">✕</button></div>`).join(''):`<div class="empty"><div class="empty-icon">📝</div><h4>Sin movimientos</h4><p>Registra tu primer ingreso o gasto</p></div>`;
 }
 
-function renderPL(filterYM=null) {
-  const monthSet=new Set(S.transactions.map(t=>t.fecha.substring(0,7)));
-  const months=[...monthSet].sort(); S.plMonth=filterYM;
-  document.getElementById('monthPills').innerHTML=[`<div class="month-pill ${!filterYM?'active':''}" onclick="renderPL(null)">Todo el año</div>`,...months.map(m=>`<div class="month-pill ${m===filterYM?'active':''}" onclick="renderPL('${m}')">${fmtMonthLabel(m)}</div>`)].join('');
-  const filtered=filterYM?S.transactions.filter(t=>t.fecha.startsWith(filterYM)):S.transactions;
-  const ingTxs=filtered.filter(t=>t.tipo==='ingreso'); const gasTxs=filtered.filter(t=>t.tipo==='gasto');
-  const totalIng=ingTxs.reduce((s,t)=>s+t.monto,0); const totalGas=gasTxs.reduce((s,t)=>s+t.monto,0); const util=totalIng-totalGas;
-  const gasMap={}; gasTxs.forEach(t=>{const k=t.categoria||'otro';gasMap[k]=(gasMap[k]||0)+t.monto;});
-  const ingMap={}; ingTxs.forEach(t=>{const k=t.categoria||'ventas';ingMap[k]=(ingMap[k]||0)+t.monto;});
-  let html='';
-  html+=`<tr class="pl-section"><td colspan="3">📥 INGRESOS</td></tr>`;
-  Object.entries(ingMap).forEach(([k,v])=>{html+=`<tr><td>${CAT_LABELS[k]||k}</td><td class="text-green">${fmt(v)}</td><td>${totalIng>0?((v/totalIng)*100).toFixed(1)+'%':'—'}</td></tr>`;});
-  html+=`<tr class="pl-subtotal"><td><strong>Total Ingresos</strong></td><td class="text-green"><strong>${fmt(totalIng)}</strong></td><td>100%</td></tr>`;
-  html+=`<tr class="pl-section"><td colspan="3">📤 COSTOS Y GASTOS</td></tr>`;
-  Object.entries(gasMap).forEach(([k,v])=>{html+=`<tr><td>${CAT_LABELS[k]||k}</td><td class="text-red">(${fmt(v)})</td><td>${totalIng>0?((v/totalIng)*100).toFixed(1)+'%':'—'}</td></tr>`;});
-  html+=`<tr class="pl-subtotal"><td><strong>Total Gastos</strong></td><td class="text-red"><strong>(${fmt(totalGas)})</strong></td><td>${totalIng>0?((totalGas/totalIng)*100).toFixed(1)+'%':'—'}</td></tr>`;
-  const utilClass=util>=0?'text-green':'text-red'; const margen=totalIng>0?((util/totalIng)*100).toFixed(1)+'%':'—';
-  html+=`<tr class="pl-net" style="background:${util>=0?'var(--green-bg)':'var(--red-bg)'}"><td>📊 UTILIDAD BRUTA</td><td class="${utilClass}">${fmt(util)}</td><td class="${utilClass}">${margen}</td></tr>`;
-  document.getElementById('plBody').innerHTML=html||`<tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--ink-muted)">Sin movimientos</td></tr>`;
+// P&L state
+let plSelectedMonths = new Set();
+let plMode = 'ytd'; // 'ytd' | 'multi'
+
+function renderPL() {
+  const now = new Date();
+  const currentYear = now.getFullYear().toString();
+  const monthSet = new Set(S.transactions.map(t => t.fecha.substring(0,7)));
+  const allMonths = [...monthSet].sort();
+
+  // Build pills
+  const plSubEl = document.getElementById('plSub');
+  const pillsEl = document.getElementById('monthPills');
+
+  const ytdMonths = allMonths.filter(m => m.startsWith(currentYear));
+  const isYtd = plMode === 'ytd';
+
+  // Update subtitle
+  if (plSubEl) {
+    if (isYtd) plSubEl.textContent = `Lo que va del año ${currentYear}`;
+    else if (plSelectedMonths.size === 0) plSubEl.textContent = 'Todo el historial';
+    else plSubEl.textContent = `${plSelectedMonths.size} mes${plSelectedMonths.size>1?'es':''} seleccionado${plSelectedMonths.size>1?'s':''}`;
+  }
+
+  // Render pills
+  pillsEl.innerHTML = `
+    <div class="month-pill ${isYtd?'active':''}" onclick="setPLMode('ytd')">Lo que va del año</div>
+    <div class="month-pill ${!isYtd && plSelectedMonths.size===0?'active':''}" onclick="setPLMode('all')">Todo el historial</div>
+    ${allMonths.map(m => `<div class="month-pill ${!isYtd && plSelectedMonths.has(m)?'active':''}" onclick="togglePLMonth('${m}')">${fmtMonthLabel(m)}</div>`).join('')}
+  `;
+
+  // Filter transactions
+  let filtered;
+  if (isYtd) {
+    filtered = S.transactions.filter(t => t.fecha.startsWith(currentYear));
+  } else if (plSelectedMonths.size > 0) {
+    filtered = S.transactions.filter(t => plSelectedMonths.has(t.fecha.substring(0,7)));
+  } else {
+    filtered = S.transactions;
+  }
+
+  // Calculate
+  const ingTxs = filtered.filter(t=>t.tipo==='ingreso');
+  const gasTxs = filtered.filter(t=>t.tipo==='gasto');
+  const totalIng = ingTxs.reduce((s,t)=>s+t.monto,0);
+  const totalGas = gasTxs.reduce((s,t)=>s+t.monto,0);
+  const util = totalIng - totalGas;
+  const gasMap = {}; gasTxs.forEach(t=>{const k=t.categoria||'otro';gasMap[k]=(gasMap[k]||0)+t.monto;});
+  const ingMap = {}; ingTxs.forEach(t=>{const k=t.categoria||'ventas';ingMap[k]=(ingMap[k]||0)+t.monto;});
+
+  let html = '';
+  html += `<tr class="pl-section"><td colspan="3">📥 INGRESOS</td></tr>`;
+  Object.entries(ingMap).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{html+=`<tr><td>${CAT_LABELS[k]||k}</td><td class="text-green">${fmt(v)}</td><td>${totalIng>0?((v/totalIng)*100).toFixed(1)+'%':'—'}</td></tr>`;});
+  html += `<tr class="pl-subtotal"><td><strong>Total Ingresos</strong></td><td class="text-green"><strong>${fmt(totalIng)}</strong></td><td>100%</td></tr>`;
+  html += `<tr class="pl-section"><td colspan="3">📤 COSTOS Y GASTOS</td></tr>`;
+  Object.entries(gasMap).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{html+=`<tr><td>${CAT_LABELS[k]||k}</td><td class="text-red">(${fmt(v)})</td><td>${totalIng>0?((v/totalIng)*100).toFixed(1)+'%':'—'}</td></tr>`;});
+  html += `<tr class="pl-subtotal"><td><strong>Total Gastos</strong></td><td class="text-red"><strong>(${fmt(totalGas)})</strong></td><td>${totalIng>0?((totalGas/totalIng)*100).toFixed(1)+'%':'—'}</td></tr>`;
+  const utilClass = util>=0?'text-green':'text-red';
+  const margen = totalIng>0?((util/totalIng)*100).toFixed(1)+'%':'—';
+  html += `<tr class="pl-net" style="background:${util>=0?'var(--green-bg)':'var(--red-bg)'}"><td>📊 UTILIDAD BRUTA</td><td class="${utilClass}">${fmt(util)}</td><td class="${utilClass}">${margen}</td></tr>`;
+  document.getElementById('plBody').innerHTML = html || `<tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--ink-muted)">Sin movimientos en este período</td></tr>`;
+}
+
+function setPLMode(mode) {
+  plMode = mode;
+  if (mode === 'ytd' || mode === 'all') plSelectedMonths.clear();
+  renderPL();
+}
+
+function togglePLMonth(m) {
+  plMode = 'multi';
+  if (plSelectedMonths.has(m)) plSelectedMonths.delete(m);
+  else plSelectedMonths.add(m);
+  if (plSelectedMonths.size === 0) plMode = 'all';
+  renderPL();
 }
 
 let histTipo = 'todos';
@@ -1309,7 +1365,7 @@ function showPage(page,btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById(`page-${page}`).classList.add('active'); btn.classList.add('active');
-  if(page==='pl')renderPL(S.plMonth);
+  if(page==='pl')renderPL();
   if(page==='historial'){populateHistMeses();renderHistorial();loadImports();}
   if(page==='reporte')initReportePage();
 
