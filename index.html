@@ -179,6 +179,13 @@ aside.sidebar.visible { display:flex; }
 .btn-submit:hover { background:#235a40; transform:translateY(-1px); }
 .btn-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
 
+.hist-filter-btn { padding:0.3rem 0.75rem; border:1.5px solid var(--border); border-radius:20px; background:var(--surface); font-family:'Instrument Sans',sans-serif; font-size:0.78rem; color:var(--ink-muted); cursor:pointer; transition:all 0.12s; font-weight:500; }
+.hist-filter-btn:hover { border-color:var(--accent); color:var(--accent); }
+.hist-filter-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
+.hist-mes-btn { padding:0.25rem 0.65rem; border:1.5px solid var(--border); border-radius:20px; background:var(--surface); font-family:'Instrument Sans',sans-serif; font-size:0.75rem; color:var(--ink-muted); cursor:pointer; transition:all 0.12s; }
+.hist-mes-btn:hover { border-color:var(--accent); color:var(--accent); }
+.hist-mes-btn.active { background:var(--green-bg); color:var(--green); border-color:var(--green); font-weight:600; }
+
 .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:var(--ink); color:#fff; padding:0.65rem 1.1rem; border-radius:8px; font-size:0.82rem; z-index:300; transform:translateY(80px); opacity:0; transition:all 0.3s; pointer-events:none; }
 .toast.show { transform:translateY(0); opacity:1; }
 .toast.ok { background:var(--green); }
@@ -359,31 +366,6 @@ aside.sidebar.visible { display:flex; }
         <div><div class="page-title">Historial completo</div><div class="page-subtitle" id="histSub">Todos los movimientos</div></div>
       </div>
 
-      <!-- Filtros -->
-      <div class="card" style="margin-bottom:1.25rem;padding:1rem 1.4rem">
-        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-          <div style="display:flex;align-items:center;gap:0.5rem">
-            <label style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-muted)">Tipo</label>
-            <select id="histFilter" onchange="renderHistorial()" style="padding:0.35rem 0.7rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;background:var(--surface);color:var(--ink);outline:none">
-              <option value="todos">Todos</option>
-              <option value="ingreso">Ingresos</option>
-              <option value="gasto">Gastos</option>
-            </select>
-          </div>
-          <div style="display:flex;align-items:center;gap:0.5rem">
-            <label style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-muted)">Mes</label>
-            <select id="histMesFilter" onchange="renderHistorial()" style="padding:0.35rem 0.7rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;background:var(--surface);color:var(--ink);outline:none">
-              <option value="">Todos los meses</option>
-            </select>
-          </div>
-          <div style="display:flex;align-items:center;gap:0.5rem">
-            <label style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-muted)">Día</label>
-            <input type="date" id="histDiaFilter" onchange="renderHistorial()" style="padding:0.35rem 0.7rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;background:var(--surface);color:var(--ink);outline:none">
-          </div>
-          <button onclick="clearHistFilters()" style="padding:0.35rem 0.8rem;border:1.5px solid var(--border);border-radius:7px;background:none;font-family:'Instrument Sans',sans-serif;font-size:0.78rem;color:var(--ink-muted);cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--ink-muted)'" onmouseout="this.style.borderColor='var(--border)'">Limpiar filtros</button>
-        </div>
-      </div>
-
       <!-- Importaciones -->
       <div class="card" style="margin-bottom:1.25rem">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.9rem">
@@ -393,6 +375,39 @@ aside.sidebar.visible { display:flex; }
           </div>
         </div>
         <div id="importsList"><div style="color:var(--ink-muted);font-size:0.83rem">Cargando...</div></div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card" style="margin-bottom:1.25rem;padding:1.25rem 1.4rem">
+        <div style="display:flex;align-items:flex-start;gap:1.5rem;flex-wrap:wrap">
+
+          <!-- Tipo -->
+          <div>
+            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--ink-muted);margin-bottom:0.5rem">Tipo</div>
+            <div style="display:flex;gap:0.4rem">
+              <button onclick="setHistTipo('todos',this)" class="hist-filter-btn active" data-tipo="todos">Todos</button>
+              <button onclick="setHistTipo('ingreso',this)" class="hist-filter-btn" data-tipo="ingreso">Ingresos</button>
+              <button onclick="setHistTipo('gasto',this)" class="hist-filter-btn" data-tipo="gasto">Gastos</button>
+            </div>
+          </div>
+
+          <!-- Meses (multi-select) -->
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--ink-muted);margin-bottom:0.5rem">Meses <span id="mesesCount" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink-faint,#b8b2aa)"></span></div>
+            <div id="histMesesWrap" style="display:flex;flex-wrap:wrap;gap:0.35rem"></div>
+          </div>
+
+          <!-- Día específico -->
+          <div>
+            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--ink-muted);margin-bottom:0.5rem">Día específico</div>
+            <input type="date" id="histDiaFilter" onchange="renderHistorial()" style="padding:0.35rem 0.7rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;background:var(--surface);color:var(--ink);outline:none">
+          </div>
+
+          <!-- Limpiar -->
+          <div style="display:flex;align-items:flex-end;padding-bottom:2px">
+            <button onclick="clearHistFilters()" style="padding:0.38rem 0.85rem;border:1.5px solid var(--border);border-radius:7px;background:none;font-family:'Instrument Sans',sans-serif;font-size:0.78rem;color:var(--ink-muted);cursor:pointer;transition:all 0.15s;white-space:nowrap" onmouseover="this.style.borderColor='var(--ink-muted)';this.style.color='var(--ink)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--ink-muted)'">✕ Limpiar</button>
+          </div>
+        </div>
       </div>
 
       <!-- Transacciones -->
@@ -987,37 +1002,64 @@ function renderPL(filterYM=null) {
   document.getElementById('plBody').innerHTML=html||`<tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--ink-muted)">Sin movimientos</td></tr>`;
 }
 
+let histTipo = 'todos';
+let histMeses = new Set();
+
+function setHistTipo(tipo, btn) {
+  histTipo = tipo;
+  document.querySelectorAll('.hist-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistorial();
+}
+
+function toggleHistMes(mes, btn) {
+  if (histMeses.has(mes)) { histMeses.delete(mes); btn.classList.remove('active'); }
+  else { histMeses.add(mes); btn.classList.add('active'); }
+  const count = histMeses.size;
+  const el = document.getElementById('mesesCount');
+  if (el) el.textContent = count > 0 ? `— ${count} seleccionado${count>1?'s':''}` : '';
+  renderHistorial();
+}
+
 function renderHistorial() {
-  const filter = document.getElementById('histFilter')?.value || 'todos';
-  const mesFilter = document.getElementById('histMesFilter')?.value || '';
   const diaFilter = document.getElementById('histDiaFilter')?.value || '';
-
   let all = [...S.transactions];
-  if (filter !== 'todos') all = all.filter(t => t.tipo === filter);
-  if (mesFilter) all = all.filter(t => t.fecha.startsWith(mesFilter));
+  if (histTipo !== 'todos') all = all.filter(t => t.tipo === histTipo);
+  if (histMeses.size > 0) all = all.filter(t => histMeses.has(t.fecha.substring(0,7)));
   if (diaFilter) all = all.filter(t => t.fecha === diaFilter);
-
-  document.getElementById('histSub').textContent = `${all.length} movimientos${mesFilter||diaFilter ? ' (filtrado)' : ''}`;
+  const active = histTipo !== 'todos' || histMeses.size > 0 || diaFilter;
+  document.getElementById('histSub').textContent = `${all.length} movimientos${active ? ' (filtrado)' : ''}`;
   document.getElementById('histList').innerHTML = all.length
     ? all.map(t => `<div class="tx-item"><div class="tx-dot" style="background:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}"></div><div class="tx-info"><div class="tx-concepto">${t.concepto}</div><div class="tx-meta">${fmtDate(t.fecha)} · ${CAT_LABELS[t.categoria]||t.categoria||t.tipo}</div></div><div class="tx-amount ${t.tipo}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div><button class="tx-del" onclick="deleteTransaction('${t.id}')">✕</button></div>`).join('')
     : `<div class="empty"><div class="empty-icon">🧾</div><h4>Sin resultados</h4><p>No hay movimientos con los filtros seleccionados</p></div>`;
 }
 
 function populateHistMeses() {
-  const sel = document.getElementById('histMesFilter');
-  if (!sel) return;
+  const wrap = document.getElementById('histMesesWrap');
+  if (!wrap) return;
+  const MNAMES = {'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'};
   const meses = [...new Set(S.transactions.map(t => t.fecha.substring(0,7)))].sort().reverse();
-  const MNAMES = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
-  const current = sel.value;
-  sel.innerHTML = '<option value="">Todos los meses</option>' +
-    meses.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">${MNAMES[mo]||mo} ${y}</option>`; }).join('');
-  if (current) sel.value = current;
+  wrap.innerHTML = meses.map(m => {
+    const [y, mo] = m.split('-');
+    const isActive = histMeses.has(m);
+    return `<button class="hist-mes-btn${isActive?' active':''}" onclick="toggleHistMes('${m}',this)">${MNAMES[mo]||mo} ${y}</button>`;
+  }).join('');
+  const count = histMeses.size;
+  const el = document.getElementById('mesesCount');
+  if (el) el.textContent = count > 0 ? `— ${count} seleccionado${count>1?'s':''}` : '';
 }
 
 function clearHistFilters() {
-  document.getElementById('histFilter').value = 'todos';
-  document.getElementById('histMesFilter').value = '';
-  document.getElementById('histDiaFilter').value = '';
+  histTipo = 'todos';
+  histMeses.clear();
+  document.querySelectorAll('.hist-filter-btn').forEach(b => b.classList.remove('active'));
+  const todosBtn = document.querySelector('.hist-filter-btn[data-tipo="todos"]');
+  if (todosBtn) todosBtn.classList.add('active');
+  const diaEl = document.getElementById('histDiaFilter');
+  if (diaEl) diaEl.value = '';
+  const countEl = document.getElementById('mesesCount');
+  if (countEl) countEl.textContent = '';
+  populateHistMeses();
   renderHistorial();
 }
 
