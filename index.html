@@ -316,17 +316,26 @@ aside.sidebar.visible { display:flex; }
         <div class="kpi-card">
           <div class="kpi-top"><div class="kpi-label">Ingresos</div></div>
           <div class="kpi-value text-green" id="kpiIng">$0</div>
-          <div class="kpi-sub" id="kpiIngSub">período</div>
+          <div class="kpi-sub" id="kpiIngSub" style="display:flex;align-items:center;gap:0.4rem">período <span id="kpiIngDelta"></span></div>
+          <div id="kpiMetaWrap" style="margin-top:0.75rem;display:none">
+            <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--ink-muted);margin-bottom:0.3rem">
+              <span>Meta mensual</span><span id="kpiMetaPct">0%</span>
+            </div>
+            <div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden">
+              <div id="kpiMetaBar" style="height:100%;background:var(--green);border-radius:3px;transition:width 0.5s ease;width:0%"></div>
+            </div>
+            <div style="font-size:0.68rem;color:var(--ink-muted);margin-top:0.25rem" id="kpiMetaLabel"></div>
+          </div>
         </div>
         <div class="kpi-card">
           <div class="kpi-top"><div class="kpi-label">Gastos</div></div>
           <div class="kpi-value text-red" id="kpiGas">$0</div>
-          <div class="kpi-sub">período</div>
+          <div class="kpi-sub" style="display:flex;align-items:center;gap:0.4rem">período <span id="kpiGasDelta"></span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-top"><div class="kpi-label">Utilidad Bruta</div></div>
           <div class="kpi-value" id="kpiUtil">$0</div>
-          <div class="kpi-sub" id="kpiMargen">Margen: 0%</div>
+          <div class="kpi-sub" style="display:flex;align-items:center;gap:0.4rem"><span id="kpiMargen">Margen: 0%</span> <span id="kpiUtilDelta"></span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-top"><div class="kpi-label">Movimientos</div></div>
@@ -338,8 +347,14 @@ aside.sidebar.visible { display:flex; }
         <div class="card"><div class="card-title">Ingresos vs Gastos</div><div class="card-sub">Últimos 6 meses</div><div class="chart-wrap"><canvas id="barChart"></canvas></div></div>
         <div class="card"><div class="card-title">Gastos por Categoría</div><div class="card-sub">Distribución del período</div><div class="chart-wrap"><canvas id="pieChart"></canvas></div></div>
       </div>
-      <div class="bottom-row">
-        <div class="add-tx-card"></div>
+      <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:1.25rem;margin-top:1.25rem">
+        <!-- Top gastos -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:0.2rem">Top gastos del período</div>
+          <div class="card-sub" style="margin-bottom:0.9rem">Categorías con mayor gasto</div>
+          <div id="topGastosList"></div>
+        </div>
+        <!-- Movimientos recientes -->
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.9rem">
             <div>
@@ -350,6 +365,10 @@ aside.sidebar.visible { display:flex; }
           </div>
           <div class="tx-list" id="recentList"><div class="empty"><div class="empty-icon">📝</div><h4>Sin movimientos</h4><p>Registra tu primer ingreso o gasto</p></div></div>
         </div>
+      </div>
+      <!-- Meta modal trigger -->
+      <div id="metaBtnWrap" style="margin-top:0.75rem;display:none">
+        <button onclick="openMetaModal()" style="font-size:0.75rem;color:var(--ink-muted);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:'Instrument Sans',sans-serif">⚙️ Cambiar meta mensual</button>
       </div>
     </div>
 
@@ -748,6 +767,22 @@ aside.sidebar.visible { display:flex; }
   </div>
 </div>
 
+<!-- Meta Modal -->
+<div class="modal-overlay" id="metaModal">
+  <div class="modal" style="max-width:360px">
+    <h3>Meta mensual de ingresos</h3>
+    <div class="card-sub" style="margin-top:-0.75rem;margin-bottom:1.25rem">Define cuánto quieres ganar este mes</div>
+    <div class="form-group">
+      <label>Meta de ingresos ($)</label>
+      <input type="number" id="metaInput" placeholder="Ej: 50000" min="0" step="1000">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="document.getElementById('metaModal').classList.remove('show')">Cancelar</button>
+      <button class="btn-full" onclick="saveMeta()">Guardar meta</button>
+    </div>
+  </div>
+</div>
+
 <!-- New Biz Modal -->
 <div class="modal-overlay" id="bizModal">
   <div class="modal">
@@ -934,6 +969,43 @@ async function deleteTransaction(id) {
 }
 
 // Filters & render
+function getPrevFiltered() {
+  const now = new Date();
+  const txs = S.transactions.filter(t => t.business_id === S.activeBizId || !t.business_id);
+  if (S.period === 'mes') {
+    const prevMonth = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const ym = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}`;
+    return txs.filter(t => t.fecha.startsWith(ym));
+  } else if (S.period === 'trim') {
+    const q = Math.floor(now.getMonth()/3);
+    const prevQ = q === 0 ? 3 : q-1;
+    const prevYear = q === 0 ? now.getFullYear()-1 : now.getFullYear();
+    const months = [prevQ*3+1, prevQ*3+2, prevQ*3+3].map(m => `${prevYear}-${String(m).padStart(2,'0')}`);
+    return txs.filter(t => months.some(m => t.fecha.startsWith(m)));
+  } else {
+    return txs.filter(t => t.fecha.startsWith(String(now.getFullYear()-1)));
+  }
+}
+
+function openMetaModal() {
+  const meta = localStorage.getItem(`meta_${S.activeBizId}`) || '';
+  document.getElementById('metaInput').value = meta;
+  document.getElementById('metaModal').classList.add('show');
+}
+
+function saveMeta() {
+  const val = parseFloat(document.getElementById('metaInput').value);
+  if (val > 0) {
+    localStorage.setItem(`meta_${S.activeBizId}`, val.toString());
+    showToast('✅ Meta guardada', 'ok');
+  } else {
+    localStorage.removeItem(`meta_${S.activeBizId}`);
+    showToast('Meta eliminada', '');
+  }
+  document.getElementById('metaModal').classList.remove('show');
+  renderDashboard();
+}
+
 function getFiltered() {
   const now = new Date();
   return S.transactions.filter(t => {
@@ -954,18 +1026,91 @@ function renderDashboard() {
   const biz = S.businesses.find(b=>b.id===S.activeBizId);
   document.getElementById('dashTitle').textContent = biz?.name||'Sin negocio';
   document.getElementById('dashSub').textContent = biz?.type||'Crea un negocio para comenzar';
-  const filtered=getFiltered();
-  const ing=filtered.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-  const gas=filtered.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
-  const util=ing-gas; const margen=ing>0?((util/ing)*100).toFixed(1):0;
-  document.getElementById('kpiIng').textContent=fmt(ing);
-  document.getElementById('kpiGas').textContent=fmt(gas);
-  document.getElementById('kpiUtil').textContent=fmt(util);
-  document.getElementById('kpiUtil').className='kpi-value '+(util>=0?'text-green':'text-red');
-  document.getElementById('kpiMargen').textContent=`Margen: ${margen}%`;
-  document.getElementById('kpiMov').textContent=filtered.length;
-  document.getElementById('kpiMovSub').textContent=`de ${S.transactions.length} totales`;
-  renderCharts(); renderRecent(filtered);
+
+  const filtered = getFiltered();
+  const ing = filtered.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const gas = filtered.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+  const util = ing - gas;
+  const margen = ing > 0 ? ((util/ing)*100).toFixed(1) : 0;
+
+  document.getElementById('kpiIng').textContent = fmt(ing);
+  document.getElementById('kpiGas').textContent = fmt(gas);
+  document.getElementById('kpiUtil').textContent = fmt(util);
+  document.getElementById('kpiUtil').className = 'kpi-value ' + (util>=0?'text-green':'text-red');
+  document.getElementById('kpiMargen').textContent = `Margen: ${margen}%`;
+  document.getElementById('kpiMov').textContent = filtered.length;
+  document.getElementById('kpiMovSub').textContent = `de ${S.transactions.length} totales`;
+
+  // ── DELTAS vs período anterior ──
+  const prevFiltered = getPrevFiltered();
+  const prevIng = prevFiltered.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const prevGas = prevFiltered.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+  const prevUtil = prevIng - prevGas;
+
+  function renderDelta(elId, current, prev) {
+    const el = document.getElementById(elId);
+    if (!el || prev === 0) { if(el) el.innerHTML=''; return; }
+    const pct = ((current - prev) / Math.abs(prev) * 100).toFixed(1);
+    const up = current >= prev;
+    el.innerHTML = `<span style="font-size:0.68rem;font-weight:700;padding:0.12rem 0.4rem;border-radius:4px;background:${up?'var(--green-bg)':'var(--red-bg)'};color:${up?'var(--green)':'var(--red)'}">${up?'↑':'↓'} ${Math.abs(pct)}%</span>`;
+  }
+  renderDelta('kpiIngDelta', ing, prevIng);
+  renderDelta('kpiGasDelta', gas, prevGas);
+  renderDelta('kpiUtilDelta', util, prevUtil);
+
+  // ── META MENSUAL ──
+  const meta = parseFloat(localStorage.getItem(`meta_${S.activeBizId}`) || '0');
+  const metaWrap = document.getElementById('kpiMetaWrap');
+  const metaBtnWrap = document.getElementById('metaBtnWrap');
+  if (meta > 0 && S.period === 'mes') {
+    const pct = Math.min(100, (ing / meta * 100));
+    const remaining = meta - ing;
+    metaWrap.style.display = 'block';
+    document.getElementById('kpiMetaBar').style.width = pct.toFixed(1) + '%';
+    document.getElementById('kpiMetaBar').style.background = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--gold)' : 'var(--accent)';
+    document.getElementById('kpiMetaPct').textContent = pct.toFixed(0) + '%';
+    document.getElementById('kpiMetaLabel').textContent = pct >= 100 ? '✅ Meta alcanzada' : `Faltan ${fmt(remaining)} para la meta`;
+    if (metaBtnWrap) metaBtnWrap.style.display = 'block';
+  } else {
+    metaWrap.style.display = 'none';
+    if (metaBtnWrap) metaBtnWrap.style.display = S.period === 'mes' ? 'block' : 'none';
+  }
+
+  // ── TOP GASTOS ──
+  const cats = {};
+  filtered.filter(t=>t.tipo==='gasto').forEach(t => {
+    const k = t.categoria || 'otro';
+    cats[k] = (cats[k]||0) + t.monto;
+  });
+  const topCats = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const topEl = document.getElementById('topGastosList');
+  if (topEl) {
+    if (topCats.length === 0) {
+      topEl.innerHTML = '<div style="color:var(--ink-muted);font-size:0.82rem;padding:0.5rem 0">Sin gastos en este período</div>';
+    } else {
+      const maxGas = topCats[0][1];
+      topEl.innerHTML = topCats.map(([k,v], i) => {
+        const pct = maxGas > 0 ? (v/maxGas*100) : 0;
+        const totalPct = gas > 0 ? (v/gas*100).toFixed(0) : 0;
+        const colors = ['var(--red)', 'var(--gold)', 'var(--blue)'];
+        return `<div style="margin-bottom:0.85rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem">
+            <div style="font-size:0.82rem;font-weight:500">${CAT_LABELS[k]||k}</div>
+            <div style="display:flex;align-items:center;gap:0.5rem">
+              <span style="font-size:0.7rem;color:var(--ink-muted)">${totalPct}% del total</span>
+              <span style="font-size:0.82rem;font-weight:700;color:var(--red)">${fmt(v)}</span>
+            </div>
+          </div>
+          <div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct.toFixed(1)}%;background:${colors[i]};border-radius:3px;opacity:0.7;transition:width 0.4s ease"></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  renderCharts();
+  renderRecent(filtered);
 }
 
 function renderCharts() {
