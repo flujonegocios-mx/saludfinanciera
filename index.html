@@ -818,13 +818,23 @@ const PALETTE = ['#2d6a4f','#e76f51','#264653','#e9c46a','#457b9d','#6d6875','#f
 const CAT_LABELS = { mercancia:'Mercancía', renta:'Renta', nomina:'Nómina', servicios_pub:'Servicios públicos', marketing:'Marketing', transporte:'Transporte', otro:'Otro', ventas:'Ventas', servicios:'Servicios' };
 
 async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  document.getElementById('loadingScreen').style.display = 'none';
-  if (session?.user) {
-    S.user = session.user;
-    await checkAccessAndEnter();
-  } else {
+  try {
+    const sessionPromise = sb.auth.getSession();
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000));
+    const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
+    document.getElementById('loadingScreen').style.display = 'none';
+    if (session?.user) {
+      S.user = session.user;
+      await checkAccessAndEnter();
+    } else {
+      document.getElementById('authScreen').classList.add('show');
+    }
+  } catch(e) {
+    document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('authScreen').classList.add('show');
+    if (e.message === 'timeout') {
+      document.getElementById('authMsg').textContent = 'Tiempo de espera agotado. Verifica tu internet e intenta de nuevo.';
+    }
   }
 }
 
