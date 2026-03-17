@@ -866,8 +866,10 @@ async function checkAccessAndEnter() {
 
 async function enterApp(profile) {
   document.getElementById('appScreen').classList.add('show');
-  document.querySelector('.sidebar').classList.add('visible');
-  document.querySelector('.fab').classList.add('visible');
+  const sidebar = document.querySelector('.sidebar');
+  const fab = document.querySelector('.fab');
+  if (sidebar) sidebar.classList.add('visible');
+  if (fab) fab.classList.add('visible');
   const name = profile?.name || S.user.user_metadata?.name || S.user.email.split('@')[0];
   document.getElementById('userAvatar').textContent = name[0].toUpperCase();
   document.getElementById('userName').textContent = name;
@@ -887,8 +889,10 @@ async function doLogout() {
   document.getElementById('appScreen').classList.remove('show');
   document.getElementById('blockedScreen').classList.remove('show');
   document.getElementById('authScreen').classList.add('show');
-  document.querySelector('.sidebar').classList.remove('visible');
-  document.querySelector('.fab').classList.remove('visible');
+  const sidebar = document.querySelector('.sidebar');
+  const fab = document.querySelector('.fab');
+  if (sidebar) sidebar.classList.remove('visible');
+  if (fab) fab.classList.remove('visible');
 }
 
 // Businesses
@@ -1191,6 +1195,11 @@ function renderCharts() {
   pieChart=new Chart(document.getElementById('pieChart').getContext('2d'),{type:'doughnut',data:{labels:cats.length?cats.map(c=>CAT_LABELS[c]||c):['Sin gastos'],datasets:[{data:cats.length?cats.map(c=>catMap[c]):[1],backgroundColor:PALETTE.map(c=>c+'cc'),borderColor:PALETTE,borderWidth:1.5,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#8a8270',font:{size:10},padding:8,boxWidth:8}},tooltip:{callbacks:{label:c=>` ${fmt(c.raw)}`}}}}});
 }
 
+function goToHistorial() {
+  const btn = document.querySelector('.nav-item[onclick*="historial"]');
+  if (btn) showPage('historial', btn);
+}
+
 function renderRecent(filtered) {
   const recent = [...filtered].slice(0, 5);
   const total = filtered.length;
@@ -1205,7 +1214,7 @@ function renderRecent(filtered) {
   ).join('');
   if (total > 5) {
     listEl.innerHTML += `<div style="text-align:center;padding:0.75rem 0;border-top:1px solid var(--border);margin-top:0.4rem">
-      <button onclick="showPage('historial', document.querySelector('.nav-item[onclick*=historial]'))" style="background:none;border:none;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;color:var(--accent);cursor:pointer;font-weight:600">Ver todos los movimientos →</button>
+      <button onclick="goToHistorial()" style="background:none;border:none;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;color:var(--accent);cursor:pointer;font-weight:600">Ver todos los movimientos →</button>
     </div>`;
   }
 }
