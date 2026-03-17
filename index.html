@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Playfair+Display:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
 
 :root {
   --bg: #f8f6f1;
@@ -40,6 +40,7 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
 .spinner { width:32px; height:32px; border:3px solid rgba(255,255,255,0.1); border-top-color:#4ade80; border-radius:50%; animation:spin 0.8s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg)} }
 
+/* Auth */
 .auth-screen { min-height:100vh; display:none; align-items:center; justify-content:center; background:linear-gradient(135deg,#1c1a17 0%,#2d3a2e 100%); padding:1.5rem; }
 .auth-screen.show { display:flex; }
 .auth-card { background:var(--surface); border-radius:20px; padding:2.5rem; width:100%; max-width:420px; box-shadow:0 24px 80px rgba(0,0,0,0.3); animation:fadeUp 0.5s ease; }
@@ -48,44 +49,58 @@ body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var
 .auth-logo h1 { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; }
 .auth-logo h1 span { color:var(--accent); }
 .auth-logo p { color:var(--ink-muted); font-size:0.85rem; margin-top:0.3rem; }
-.auth-msg { font-size:0.8rem; color:var(--red); min-height:1.2rem; margin-bottom:0.5rem; text-align:center; }
+
 .form-group { margin-bottom:1rem; }
 .form-group label { display:block; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem; }
-.form-group input, .form-group select, .form-group textarea { width:100%; padding:0.7rem 1rem; border:1.5px solid var(--border); border-radius:8px; font-family:'Instrument Sans',sans-serif; font-size:0.9rem; color:var(--ink); background:var(--surface); outline:none; transition:border-color 0.15s; }
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--accent); }
-.btn-auth { width:100%; padding:0.75rem; background:var(--accent); color:#fff; border:none; border-radius:8px; font-family:'Instrument Sans',sans-serif; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.15s; }
-.btn-auth:hover { background:#235a40; }
-.btn-auth:disabled { opacity:0.6; cursor:not-allowed; }
+.form-group input { width:100%; padding:0.7rem 1rem; border:1.5px solid var(--border); border-radius:8px; font-family:'Instrument Sans',sans-serif; font-size:0.9rem; color:var(--ink); background:var(--surface); outline:none; transition:border-color 0.15s,box-shadow 0.15s; }
+.form-group input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(45,106,79,0.1); }
 
-.blocked-screen { min-height:100vh; display:none; align-items:center; justify-content:center; background:linear-gradient(135deg,#1c1a17 0%,#2d3a2e 100%); }
+.btn-primary { width:100%; padding:0.8rem; background:var(--ink); color:#fff; border:none; border-radius:8px; font-family:'Instrument Sans',sans-serif; font-weight:600; font-size:0.95rem; cursor:pointer; transition:all 0.15s; margin-top:0.5rem; }
+.btn-primary:hover { background:#2d2a25; transform:translateY(-1px); }
+.btn-primary:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+
+.auth-msg { padding:0.6rem 0.9rem; border-radius:8px; font-size:0.82rem; margin-bottom:1rem; display:none; line-height:1.5; }
+.auth-msg.error { background:var(--red-bg); border:1px solid #f5c6c2; color:var(--red); }
+.auth-msg.show { display:block; }
+
+/* Blocked screen */
+.blocked-screen { min-height:100vh; display:none; align-items:center; justify-content:center; background:linear-gradient(135deg,#1c1a17 0%,#2d3a2e 100%); padding:1.5rem; }
 .blocked-screen.show { display:flex; }
+.blocked-card { background:var(--surface); border-radius:20px; padding:2.5rem; width:100%; max-width:420px; text-align:center; }
+.blocked-icon { font-size:3rem; margin-bottom:1rem; }
+.blocked-card h2 { font-family:'Syne',sans-serif; font-size:1.2rem; margin-bottom:0.75rem; }
+.blocked-card p { color:var(--ink-muted); font-size:0.85rem; line-height:1.6; }
+.btn-back { margin-top:1.5rem; padding:0.7rem 1.5rem; background:var(--ink); color:#fff; border:none; border-radius:8px; font-family:'Instrument Sans',sans-serif; font-weight:600; cursor:pointer; }
 
-.app-screen { display:none; min-height:100vh; }
-.app-screen.show { display:flex; }
+/* App */
+.app { display:none; min-height:100vh; }
+.app.show { display:flex; }
 
-aside.sidebar { width:260px; background:var(--sidebar-bg); display:none; flex-direction:column; gap:0; padding:1.25rem 1rem; position:fixed; top:0; left:0; height:100vh; overflow-y:auto; z-index:40; }
-aside.sidebar.visible { display:flex; }
-.sidebar-logo { display:flex; align-items:center; gap:0.6rem; padding-bottom:1.25rem; border-bottom:1px solid rgba(255,255,255,0.08); }
-.sidebar-logo-icon { width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
-.sidebar-logo-text { font-family:'Playfair Display',serif; font-size:1.15rem; font-weight:600; color:#fff; letter-spacing:-0.01em; }
+.sidebar { width:260px; background:var(--sidebar-bg); padding:1.5rem 1.25rem; display:flex; flex-direction:column; gap:1.5rem; position:fixed; height:100vh; overflow-y:auto; z-index:20; }
+.sidebar-logo { display:flex; align-items:center; gap:0.7rem; padding-bottom:1.25rem; border-bottom:1px solid rgba(255,255,255,0.08); }
+.sidebar-logo-icon { width:34px; height:34px; background:var(--green-bg); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+.sidebar-logo-text { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:#fff; }
 .sidebar-logo-text span { color:#4ade80; }
-.sidebar-user { display:flex; align-items:center; gap:0.75rem; background:rgba(255,255,255,0.05); border-radius:10px; padding:0.75rem; }
-.user-avatar { width:34px; height:34px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; flex-shrink:0; }
-.user-name { font-size:0.84rem; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px; font-family:'DM Sans',sans-serif; }
-.user-email { font-size:0.71rem; color:rgba(255,255,255,0.35); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px; font-family:'DM Sans',sans-serif; }
-.sidebar-section-title { font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:rgba(255,255,255,0.2); margin-bottom:0.4rem; margin-top:1.25rem; font-family:'DM Sans',sans-serif; padding:0 0.25rem; }
-.nav-item { display:flex; align-items:center; gap:0.6rem; width:100%; padding:0.55rem 0.75rem; border:none; background:none; color:rgba(255,255,255,0.45); font-family:'DM Sans',sans-serif; font-size:0.83rem; cursor:pointer; border-radius:8px; transition:all 0.15s; text-align:left; font-weight:400; letter-spacing:0; }
-.nav-item:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.85); }
-.nav-item.active { background:rgba(255,255,255,0.12); color:#fff; font-weight:600; }
-.nav-icon { font-size:0.9rem; width:18px; text-align:center; }
-.nav-biz-item { display:flex; align-items:center; gap:0.5rem; width:100%; padding:0.45rem 0.75rem; border:none; background:none; color:rgba(255,255,255,0.4); font-family:'Instrument Sans',sans-serif; font-size:0.8rem; cursor:pointer; border-radius:8px; transition:all 0.12s; text-align:left; }
-.nav-biz-item:hover { color:rgba(255,255,255,0.8); background:rgba(255,255,255,0.05); }
-.nav-biz-item.active { color:#fff; font-weight:600; }
-.nav-biz-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
-.btn-new-biz { display:flex; align-items:center; gap:0.5rem; padding:0.55rem 0.75rem; border:1px dashed rgba(255,255,255,0.15); border-radius:8px; background:none; color:rgba(255,255,255,0.3); font-family:'DM Sans',sans-serif; font-size:0.79rem; cursor:pointer; transition:all 0.15s; width:100%; margin-top:0.3rem; }
+
+.sidebar-user { display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.75rem; background:rgba(255,255,255,0.05); border-radius:8px; }
+.user-avatar { width:30px; height:30px; border-radius:50%; background:#4ade80; color:#1c1a17; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; }
+.user-name { font-size:0.82rem; color:rgba(255,255,255,0.8); font-weight:500; }
+.user-email { font-size:0.7rem; color:rgba(255,255,255,0.4); }
+
+.sidebar-section-title { font-size:0.62rem; text-transform:uppercase; letter-spacing:0.12em; color:rgba(255,255,255,0.3); margin-bottom:0.5rem; }
+.nav-item { display:flex; align-items:center; gap:0.65rem; padding:0.6rem 0.75rem; border-radius:8px; cursor:pointer; transition:background 0.15s; color:rgba(255,255,255,0.6); font-size:0.85rem; border:none; background:none; width:100%; text-align:left; font-family:'Instrument Sans',sans-serif; }
+.nav-item:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.9); }
+.nav-item.active { background:rgba(74,222,128,0.15); color:#4ade80; font-weight:600; }
+.nav-icon { font-size:1rem; width:20px; text-align:center; }
+
+.biz-item { display:flex; align-items:center; gap:0.6rem; padding:0.55rem 0.75rem; border-radius:8px; cursor:pointer; transition:background 0.15s; color:rgba(255,255,255,0.6); font-size:0.82rem; }
+.biz-item:hover { background:rgba(255,255,255,0.06); }
+.biz-item.active { background:rgba(74,222,128,0.12); color:#4ade80; }
+.biz-avatar { width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700; flex-shrink:0; }
+.btn-new-biz { display:flex; align-items:center; gap:0.5rem; padding:0.55rem 0.75rem; border:1px dashed rgba(255,255,255,0.15); border-radius:8px; background:none; color:rgba(255,255,255,0.35); font-family:'Instrument Sans',sans-serif; font-size:0.8rem; cursor:pointer; transition:all 0.15s; width:100%; margin-top:0.3rem; }
 .btn-new-biz:hover { border-color:#4ade80; color:#4ade80; }
 .sidebar-footer { margin-top:auto; border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; }
-.btn-logout { display:flex; align-items:center; gap:0.5rem; padding:0.55rem 0.75rem; background:none; border:none; color:rgba(255,255,255,0.3); font-family:'DM Sans',sans-serif; font-size:0.79rem; cursor:pointer; transition:color 0.15s; width:100%; }
+.btn-logout { display:flex; align-items:center; gap:0.5rem; padding:0.55rem 0.75rem; background:none; border:none; color:rgba(255,255,255,0.35); font-family:'Instrument Sans',sans-serif; font-size:0.8rem; cursor:pointer; transition:color 0.15s; width:100%; }
 .btn-logout:hover { color:#f87171; }
 
 .main { margin-left:260px; flex:1; padding:2rem 2.5rem; max-width:calc(100vw - 260px); }
@@ -106,7 +121,7 @@ aside.sidebar.visible { display:flex; }
 .kpi-label { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.09em; color:var(--ink-muted); font-weight:600; }
 .kpi-icon { display:none; }
 .kpi-value { font-family:'Syne',sans-serif; font-size:1.7rem; font-weight:800; letter-spacing:-0.03em; line-height:1; }
-.kpi-sub { font-size:0.72rem; margin-top:0.5rem; color:var(--ink-muted); }
+.kpi-sub { font-size:0.72rem; margin-top:0.5rem; color:var(--ink-muted); display:flex; align-items:center; gap:0.3rem; }
 .kpi-delta { font-size:0.68rem; font-weight:700; padding:0.15rem 0.4rem; border-radius:4px; }
 .kpi-delta.up { background:var(--green-bg); color:var(--green); }
 .kpi-delta.down { background:var(--red-bg); color:var(--red); }
@@ -121,10 +136,17 @@ aside.sidebar.visible { display:flex; }
 
 .bottom-row { display:grid; grid-template-columns:1fr; gap:1.25rem; }
 .add-tx-card { display:none; }
-.fab { position:fixed; bottom:2rem; right:2rem; width:52px; height:52px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:1.5rem; cursor:pointer; box-shadow:0 4px 20px rgba(45,106,79,0.4); transition:all 0.2s; z-index:50; display:none; align-items:center; justify-content:center; }
-.fab.visible { display:flex; }
+.fab { position:fixed; bottom:2rem; right:2rem; width:52px; height:52px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:1.5rem; cursor:pointer; box-shadow:0 4px 20px rgba(45,106,79,0.4); transition:all 0.2s; z-index:50; display:flex; align-items:center; justify-content:center; }
 .fab:hover { transform:scale(1.08); box-shadow:0 6px 24px rgba(45,106,79,0.5); }
 .tx-modal { max-width:460px; }
+.tx-type-toggle { display:flex; background:var(--surface2); border-radius:8px; padding:3px; margin-bottom:1rem; }
+.tx-type-btn { flex:1; padding:0.5rem; border:none; background:none; border-radius:6px; font-family:'Instrument Sans',sans-serif; font-size:0.85rem; cursor:pointer; transition:all 0.15s; font-weight:500; color:var(--ink-muted); }
+.tx-type-btn.ingreso.active { background:var(--green); color:#fff; font-weight:700; }
+.tx-type-btn.gasto.active { background:var(--red); color:#fff; font-weight:700; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+.btn-submit { width:100%; padding:0.75rem; background:var(--accent); color:#fff; border:none; border-radius:8px; font-family:'Instrument Sans',sans-serif; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.15s; margin-top:0.75rem; }
+.btn-submit:hover { background:#235a40; transform:translateY(-1px); }
+.btn-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
 
 .tx-list { display:flex; flex-direction:column; gap:0.4rem; max-height:320px; overflow-y:auto; }
 .tx-list::-webkit-scrollbar { width:4px; }
@@ -152,9 +174,8 @@ aside.sidebar.visible { display:flex; }
 .pl-subtotal td { font-weight:700; border-top:1px solid var(--border); border-bottom:2px solid var(--border); font-size:0.88rem; }
 .pl-net td { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; border-top:2px solid var(--ink); padding:1rem 1.25rem; }
 
-.month-pills { display:flex; flex-wrap:nowrap; gap:0.4rem; margin-bottom:1.5rem; overflow-x:auto; padding-bottom:0.4rem; scrollbar-width:none; -ms-overflow-style:none; }
-.month-pills::-webkit-scrollbar { display:none; }
-.month-pill { padding:0.35rem 0.85rem; border:1.5px solid var(--border); border-radius:20px; font-size:0.78rem; cursor:pointer; transition:all 0.15s; color:var(--ink-muted); background:var(--surface); font-family:'Instrument Sans',sans-serif; white-space:nowrap; flex-shrink:0; }
+.month-pills { display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1.5rem; }
+.month-pill { padding:0.35rem 0.85rem; border:1.5px solid var(--border); border-radius:20px; font-size:0.78rem; cursor:pointer; transition:all 0.15s; color:var(--ink-muted); background:var(--surface); font-family:'Instrument Sans',sans-serif; }
 .month-pill:hover { border-color:var(--accent); color:var(--accent); }
 .month-pill.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
 
@@ -170,22 +191,6 @@ aside.sidebar.visible { display:flex; }
 .modal-actions { display:flex; gap:0.6rem; margin-top:1.25rem; }
 .btn-outline { padding:0.65rem 1rem; border:1.5px solid var(--border); border-radius:8px; background:none; font-family:'Instrument Sans',sans-serif; font-size:0.85rem; cursor:pointer; color:var(--ink-muted); }
 .btn-full { flex:1; padding:0.65rem; background:var(--ink); color:#fff; border:none; border-radius:8px; font-family:'Instrument Sans',sans-serif; font-weight:600; font-size:0.88rem; cursor:pointer; }
-
-.tx-type-toggle { display:flex; background:var(--surface2); border-radius:8px; padding:3px; margin-bottom:1rem; }
-.tx-type-btn { flex:1; padding:0.5rem; border:none; background:none; border-radius:6px; font-family:'Instrument Sans',sans-serif; font-size:0.85rem; cursor:pointer; transition:all 0.15s; font-weight:500; color:var(--ink-muted); }
-.tx-type-btn.ingreso.active { background:var(--green); color:#fff; font-weight:700; }
-.tx-type-btn.gasto.active { background:var(--red); color:#fff; font-weight:700; }
-.form-row { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
-.btn-submit { width:100%; padding:0.75rem; background:var(--accent); color:#fff; border:none; border-radius:8px; font-family:'Instrument Sans',sans-serif; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.15s; margin-top:0.75rem; }
-.btn-submit:hover { background:#235a40; transform:translateY(-1px); }
-.btn-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
-
-.hist-filter-btn { padding:0.3rem 0.75rem; border:1.5px solid var(--border); border-radius:20px; background:var(--surface); font-family:'Instrument Sans',sans-serif; font-size:0.78rem; color:var(--ink-muted); cursor:pointer; transition:all 0.12s; font-weight:500; }
-.hist-filter-btn:hover { border-color:var(--accent); color:var(--accent); }
-.hist-filter-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
-.hist-mes-btn { padding:0.25rem 0.65rem; border:1.5px solid var(--border); border-radius:20px; background:var(--surface); font-family:'Instrument Sans',sans-serif; font-size:0.75rem; color:var(--ink-muted); cursor:pointer; transition:all 0.12s; }
-.hist-mes-btn:hover { border-color:var(--accent); color:var(--accent); }
-.hist-mes-btn.active { background:var(--green-bg); color:var(--green); border-color:var(--green); font-weight:600; }
 
 .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:var(--ink); color:#fff; padding:0.65rem 1.1rem; border-radius:8px; font-size:0.82rem; z-index:300; transform:translateY(80px); opacity:0; transition:all 0.3s; pointer-events:none; }
 .toast.show { transform:translateY(0); opacity:1; }
@@ -221,7 +226,7 @@ aside.sidebar.visible { display:flex; }
       <label>Contraseña</label>
       <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <button class="btn-auth" id="btnLogin" onclick="doLogin()">Entrar →</button>
+    <button class="btn-primary" id="btnLogin" onclick="doLogin()">Entrar →</button>
     <p style="text-align:center;margin-top:1.25rem;font-size:0.78rem;color:var(--ink-muted)">¿Problemas para entrar? Contacta a tu asesor.</p>
   </div>
 </div>
@@ -237,7 +242,7 @@ aside.sidebar.visible { display:flex; }
 </div>
 
 <!-- App -->
-<div class="app-screen" id="appScreen">
+<div class="app" id="appScreen">
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="sidebar-logo-icon">📊</div>
@@ -250,52 +255,25 @@ aside.sidebar.visible { display:flex; }
         <div class="user-email" id="userEmail">correo</div>
       </div>
     </div>
-    <div style="flex:1;overflow-y:auto;padding-top:0.25rem">
-      <div class="sidebar-section-title" style="margin-top:0.75rem">Principal</div>
-      <nav style="display:flex;flex-direction:column;gap:1px;margin-bottom:0.25rem">
-        <button class="nav-item active" onclick="showPage('dashboard',this)">
-          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="7" width="4" height="6" rx="1" fill="currentColor" opacity="0.7"/><rect x="6" y="4" width="4" height="9" rx="1" fill="currentColor"/><rect x="11" y="1" width="2" height="12" rx="1" fill="currentColor" opacity="0.5"/></svg></span>
-          Dashboard
-        </button>
-        <button class="nav-item" onclick="showPage('pl',this)">
-          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="1.5" rx="0.75" fill="currentColor"/><rect x="2" y="5.5" width="7" height="1.5" rx="0.75" fill="currentColor" opacity="0.6"/><rect x="2" y="9" width="9" height="1.5" rx="0.75" fill="currentColor" opacity="0.8"/></svg></span>
-          Estado de Resultados
-        </button>
-        <button class="nav-item" onclick="showPage('historial',this)">
-          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M7 4.5V7L8.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
-          Historial
-        </button>
-        <button class="nav-item" onclick="showPage('importar',this)">
-          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v7M4.5 6.5L7 9l2.5-2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10.5h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
-          Importar Excel
-        </button>
+    <div>
+      <div class="sidebar-section-title">Menú</div>
+      <nav style="display:flex;flex-direction:column;gap:0.2rem">
+        <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</button>
+        <button class="nav-item" onclick="showPage('pl',this)"><span class="nav-icon">📋</span>Estado de Resultados</button>
+        <button class="nav-item" onclick="showPage('historial',this)"><span class="nav-icon">🧾</span>Historial</button>
+        <button class="nav-item" onclick="showPage('importar',this)"><span class="nav-icon">📥</span>Importar Excel</button>
+        <button class="nav-item" onclick="showPage('insights',this)"><span class="nav-icon">✨</span>Insights IA</button>
+        <button class="nav-item" onclick="showPage('forecast',this)"><span class="nav-icon">🔮</span>Forecast</button>
+        <button class="nav-item" onclick="showPage('reporte',this)"><span class="nav-icon">📄</span>Reporte PDF</button>
       </nav>
-
-      <div class="sidebar-section-title">Análisis</div>
-      <nav style="display:flex;flex-direction:column;gap:1px;margin-bottom:0.25rem">
-        <button class="nav-item" onclick="showPage('insights',this)">
-          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2" fill="currentColor"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>
-          Insights
-        </button>
-        <button class="nav-item" onclick="showPage('forecast',this)">
-          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 10.5L5 6.5L8 8.5L12.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          Forecast
-        </button>
-        <button class="nav-item" onclick="showPage('reporte',this)">
-          <span class="nav-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2.5" y="1.5" width="9" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M5 5h4M5 7.5h4M5 10h2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
-          Reporte PDF
-        </button>
-      </nav>
-
-      <div class="sidebar-section-title">Negocios</div>
+    </div>
+    <div>
+      <div class="sidebar-section-title">Mis Negocios</div>
       <div id="bizList"></div>
       <button class="btn-new-biz" onclick="openBizModal()">+ Nuevo negocio</button>
     </div>
     <div class="sidebar-footer">
-      <button class="btn-logout" onclick="doLogout()">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="opacity:0.5"><path d="M5 2.5H3C2.4 2.5 2 3 2 3.5v6c0 .6.4 1 1 1h2M9 4.5l2 2-2 2M5.5 6.5h5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Cerrar sesión
-      </button>
+      <button class="btn-logout" onclick="doLogout()">↩ Cerrar sesión</button>
     </div>
   </aside>
 
@@ -307,56 +285,40 @@ aside.sidebar.visible { display:flex; }
           <div class="page-title" id="dashTitle">Dashboard</div>
           <div class="page-subtitle" id="dashSub">Resumen financiero</div>
         </div>
-        <div style="display:flex;align-items:center;gap:0.75rem">
-          <button onclick="openMetaModal()" style="padding:0.4rem 0.9rem;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);font-family:'Instrument Sans',sans-serif;font-size:0.78rem;color:var(--ink-muted);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:0.4rem" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--ink-muted)'">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M6.5 4v2.5l1.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-            Objetivos
-          </button>
-          <div class="period-selector">
-            <button class="period-btn active" onclick="setPeriod('mes',this)">Este mes</button>
-            <button class="period-btn" onclick="setPeriod('trim',this)">Trimestre</button>
-            <button class="period-btn" onclick="setPeriod('año',this)">Año</button>
-          </div>
+        <div class="period-selector">
+          <button class="period-btn active" onclick="setPeriod('mes',this)">Este mes</button>
+          <button class="period-btn" onclick="setPeriod('trim',this)">Trimestre</button>
+          <button class="period-btn" onclick="setPeriod('año',this)">Año</button>
         </div>
       </div>
       <div class="kpi-row">
-        <div class="kpi-card">
+        <div class="kpi-card" style="border-left-color:var(--green)">
           <div class="kpi-top"><div class="kpi-label">Ingresos</div></div>
           <div class="kpi-value text-green" id="kpiIng">$0</div>
-          <div class="kpi-sub" id="kpiIngSub" style="display:flex;align-items:center;gap:0.4rem">período <span id="kpiIngDelta"></span></div>
-
+          <div class="kpi-sub" id="kpiIngSub">período</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card" style="border-left-color:var(--red)">
           <div class="kpi-top"><div class="kpi-label">Gastos</div></div>
           <div class="kpi-value text-red" id="kpiGas">$0</div>
-          <div class="kpi-sub" style="display:flex;align-items:center;gap:0.4rem">período <span id="kpiGasDelta"></span></div>
+          <div class="kpi-sub">período</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card" style="border-left-color:var(--gold)">
           <div class="kpi-top"><div class="kpi-label">Utilidad Bruta</div></div>
           <div class="kpi-value" id="kpiUtil">$0</div>
-          <div class="kpi-sub" style="display:flex;align-items:center;gap:0.4rem"><span id="kpiMargen">Margen: 0%</span> <span id="kpiUtilDelta"></span></div>
+          <div class="kpi-sub" id="kpiMargen">Margen: 0%</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card" style="border-left-color:var(--blue)">
           <div class="kpi-top"><div class="kpi-label">Movimientos</div></div>
           <div class="kpi-value" id="kpiMov">0</div>
           <div class="kpi-sub" id="kpiMovSub">registrados</div>
         </div>
       </div>
-      <!-- Objetivos / Gauges -->
-      <div id="gaugesRow" style="display:none;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem"></div>
-
       <div class="charts-row">
         <div class="card"><div class="card-title">Ingresos vs Gastos</div><div class="card-sub">Últimos 6 meses</div><div class="chart-wrap"><canvas id="barChart"></canvas></div></div>
         <div class="card"><div class="card-title">Gastos por Categoría</div><div class="card-sub">Distribución del período</div><div class="chart-wrap"><canvas id="pieChart"></canvas></div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:1.25rem;margin-top:1.25rem">
-        <!-- Top gastos -->
-        <div class="card">
-          <div class="card-title" style="margin-bottom:0.2rem">Mayores gastos del período</div>
-          <div class="card-sub" style="margin-bottom:0.9rem">Los 5 movimientos de gasto más altos</div>
-          <div id="topGastosList"></div>
-        </div>
-        <!-- Movimientos recientes -->
+      <div class="bottom-row">
+        <div class="add-tx-card"></div>
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.9rem">
             <div>
@@ -368,12 +330,11 @@ aside.sidebar.visible { display:flex; }
           <div class="tx-list" id="recentList"><div class="empty"><div class="empty-icon">📝</div><h4>Sin movimientos</h4><p>Registra tu primer ingreso o gasto</p></div></div>
         </div>
       </div>
-
     </div>
 
     <!-- P&L -->
     <div class="page" id="page-pl">
-      <div class="topbar"><div><div class="page-title">Estado de Resultados</div><div class="page-subtitle" id="plSub">Todo el historial</div></div></div>
+      <div class="topbar"><div><div class="page-title">Estado de Resultados</div><div class="page-subtitle">P&L por período</div></div></div>
       <div class="month-pills" id="monthPills"></div>
       <div class="pl-container"><table class="pl-table"><thead><tr><th>Concepto</th><th>Monto</th><th>% Ingreso</th></tr></thead><tbody id="plBody"></tbody></table></div>
     </div>
@@ -382,6 +343,9 @@ aside.sidebar.visible { display:flex; }
     <div class="page" id="page-historial">
       <div class="topbar">
         <div><div class="page-title">Historial completo</div><div class="page-subtitle" id="histSub">Todos los movimientos</div></div>
+        <select id="histFilter" onchange="renderHistorial()" style="padding:0.4rem 0.75rem;border:1px solid var(--border);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;background:var(--surface)">
+          <option value="todos">Todos</option><option value="ingreso">Solo ingresos</option><option value="gasto">Solo gastos</option>
+        </select>
       </div>
 
       <!-- Importaciones -->
@@ -393,45 +357,6 @@ aside.sidebar.visible { display:flex; }
           </div>
         </div>
         <div id="importsList"><div style="color:var(--ink-muted);font-size:0.83rem">Cargando...</div></div>
-      </div>
-
-      <!-- Filtros -->
-      <div class="card" style="margin-bottom:1.25rem;padding:1.25rem 1.4rem">
-        <div style="display:flex;align-items:flex-start;gap:1.5rem;flex-wrap:wrap">
-
-          <!-- Tipo -->
-          <div>
-            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--ink-muted);margin-bottom:0.5rem">Tipo</div>
-            <div style="display:flex;gap:0.4rem">
-              <button onclick="setHistTipo('todos',this)" class="hist-filter-btn active" data-tipo="todos">Todos</button>
-              <button onclick="setHistTipo('ingreso',this)" class="hist-filter-btn" data-tipo="ingreso">Ingresos</button>
-              <button onclick="setHistTipo('gasto',this)" class="hist-filter-btn" data-tipo="gasto">Gastos</button>
-            </div>
-          </div>
-
-          <!-- Meses (dropdown multi-select) -->
-          <div style="position:relative">
-            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--ink-muted);margin-bottom:0.5rem">Meses <span id="mesesCount" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink-faint,#b8b2aa)"></span></div>
-            <button onclick="toggleMesesDropdown()" id="mesesBtn" style="display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0.85rem;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);font-family:'Instrument Sans',sans-serif;font-size:0.78rem;color:var(--ink-muted);cursor:pointer;transition:all 0.12s;white-space:nowrap" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="if(!document.getElementById('mesesDropdown').classList.contains('open'))this.style.borderColor='var(--border)'">
-              <span id="mesesBtnLabel">Todos los meses</span>
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <div id="mesesDropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:0.5rem;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:60;max-height:260px;overflow-y:auto">
-              <div id="histMesesWrap" style="display:flex;flex-direction:column;gap:1px"></div>
-            </div>
-          </div>
-
-          <!-- Día específico -->
-          <div>
-            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--ink-muted);margin-bottom:0.5rem">Día específico</div>
-            <input type="date" id="histDiaFilter" onchange="renderHistorial()" style="padding:0.35rem 0.7rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;background:var(--surface);color:var(--ink);outline:none">
-          </div>
-
-          <!-- Limpiar -->
-          <div style="display:flex;align-items:flex-end;padding-bottom:2px">
-            <button onclick="clearHistFilters()" style="padding:0.38rem 0.85rem;border:1.5px solid var(--border);border-radius:7px;background:none;font-family:'Instrument Sans',sans-serif;font-size:0.78rem;color:var(--ink-muted);cursor:pointer;transition:all 0.15s;white-space:nowrap" onmouseover="this.style.borderColor='var(--ink-muted)';this.style.color='var(--ink)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--ink-muted)'">✕ Limpiar</button>
-          </div>
-        </div>
       </div>
 
       <!-- Transacciones -->
@@ -766,28 +691,6 @@ aside.sidebar.visible { display:flex; }
   </div>
 </div>
 
-<!-- Meta Modal -->
-<div class="modal-overlay" id="metaModal">
-  <div class="modal" style="max-width:400px">
-    <h3>Objetivos del mes</h3>
-    <div class="card-sub" style="margin-top:-0.75rem;margin-bottom:1.5rem">Define tus metas para este período</div>
-    <div class="form-group">
-      <label>🎯 Meta de ingresos ($)</label>
-      <input type="number" id="metaIngInput" placeholder="Ej: 50,000" min="0" step="1000">
-      <div style="font-size:0.72rem;color:var(--ink-muted);margin-top:0.3rem">¿Cuánto quieres ganar este mes?</div>
-    </div>
-    <div class="form-group">
-      <label>🛑 Límite de gastos ($)</label>
-      <input type="number" id="metaGasInput" placeholder="Ej: 30,000" min="0" step="1000">
-      <div style="font-size:0.72rem;color:var(--ink-muted);margin-top:0.3rem">¿Cuánto es el máximo que quieres gastar?</div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-outline" onclick="document.getElementById('metaModal').classList.remove('show')">Cancelar</button>
-      <button class="btn-full" onclick="saveMeta()">Guardar objetivos</button>
-    </div>
-  </div>
-</div>
-
 <!-- New Biz Modal -->
 <div class="modal-overlay" id="bizModal">
   <div class="modal">
@@ -831,23 +734,14 @@ async function init() {
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value;
-  if (!email) return showAuthMsg('Escribe tu correo electrónico.');
-  if (!pass) return showAuthMsg('Escribe tu contraseña.');
-  if (!isOnline()) return showAuthMsg('Sin conexión a internet. Verifica tu red.');
+  if (!email || !pass) return showAuthMsg('Completa todos los campos');
   const btn = document.getElementById('btnLogin');
-  btn.disabled = true; btn.textContent = 'Verificando...';
-  try {
-    const { data, error } = await withTimeout(sb.auth.signInWithPassword({ email, password: pass }));
-    if (error) return showAuthMsg(getErrorMsg(error));
-    S.user = data.user;
-    await checkAccessAndEnter();
-  } catch(e) {
-    showAuthMsg(e.message === 'timeout'
-      ? 'El servidor tardó demasiado. Verifica tu internet e intenta de nuevo.'
-      : getErrorMsg(e));
-  } finally {
-    btn.disabled = false; btn.textContent = 'Entrar →';
-  }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false; btn.textContent = 'Entrar →';
+  if (error) return showAuthMsg('Correo o contraseña incorrectos');
+  S.user = data.user;
+  await checkAccessAndEnter();
 }
 
 async function checkAccessAndEnter() {
@@ -866,10 +760,6 @@ async function checkAccessAndEnter() {
 
 async function enterApp(profile) {
   document.getElementById('appScreen').classList.add('show');
-  const sidebar = document.querySelector('.sidebar');
-  const fab = document.querySelector('.fab');
-  if (sidebar) sidebar.classList.add('visible');
-  if (fab) fab.classList.add('visible');
   const name = profile?.name || S.user.user_metadata?.name || S.user.email.split('@')[0];
   document.getElementById('userAvatar').textContent = name[0].toUpperCase();
   document.getElementById('userName').textContent = name;
@@ -889,10 +779,6 @@ async function doLogout() {
   document.getElementById('appScreen').classList.remove('show');
   document.getElementById('blockedScreen').classList.remove('show');
   document.getElementById('authScreen').classList.add('show');
-  const sidebar = document.querySelector('.sidebar');
-  const fab = document.querySelector('.fab');
-  if (sidebar) sidebar.classList.remove('visible');
-  if (fab) fab.classList.remove('visible');
 }
 
 // Businesses
@@ -930,12 +816,13 @@ async function createBiz() {
 async function selectBiz(id) { S.activeBizId = id; await loadTransactions(); renderBizList(); renderDashboard(); }
 
 function renderBizList() {
-  document.getElementById('bizList').innerHTML = S.businesses.map(b => {
-    return `<button class="nav-biz-item${b.id===S.activeBizId?' active':''}" onclick="selectBiz('${b.id}')">
-      <div class="nav-biz-dot"></div>
-      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.name}</span>
-    </button>`;
-  }).join('') || '<p style="font-size:0.75rem;color:rgba(255,255,255,0.2);padding:0.4rem 0.75rem">Sin negocios</p>';
+  const COLORS = ['#2d6a4f','#e76f51','#264653','#e9c46a','#457b9d'];
+  document.getElementById('bizList').innerHTML = S.businesses.map((b,i) => {
+    const color = COLORS[i%COLORS.length];
+    return `<div class="biz-item ${b.id===S.activeBizId?'active':''}" onclick="selectBiz('${b.id}')">
+      <div class="biz-avatar" style="background:${color}22;color:${color}">${b.name[0].toUpperCase()}</div>
+      <span>${b.name}</span></div>`;
+  }).join('') || '<p style="font-size:0.75rem;color:rgba(255,255,255,0.25);padding:0.4rem 0.75rem">Sin negocios aún</p>';
 }
 
 // Transactions
@@ -960,29 +847,21 @@ async function addTransaction() {
   const monto = parseFloat(document.getElementById('txMonto').value);
   const categoria = document.getElementById('txCategoria').value;
   const fecha = document.getElementById('txFecha').value;
-  if (!concepto) return showToast('Escribe un concepto para el movimiento.', 'err');
-  if (!monto || monto <= 0) return showToast('El monto debe ser mayor a cero.', 'err');
-  if (!fecha) return showToast('Selecciona la fecha del movimiento.', 'err');
-  if (!S.activeBizId) return showToast('Primero crea un negocio desde el menú lateral.', 'err');
-  if (!isOnline()) return showToast('Sin conexión. Verifica tu internet e intenta de nuevo.', 'err');
+  if (!concepto) return showToast('Escribe un concepto', 'err');
+  if (!monto || monto<=0) return showToast('Monto inválido', 'err');
+  if (!fecha) return showToast('Selecciona una fecha', 'err');
+  if (!S.activeBizId) return showToast('Crea un negocio primero', 'err');
   const btn = document.getElementById('btnAddTx');
-  btn.disabled = true; btn.textContent = 'Guardando...';
-  try {
-    const { data, error } = await withTimeout(
-      sb.from('transactions').insert({ business_id:S.activeBizId, user_id:S.user.id, tipo:txType, concepto, monto, categoria, fecha }).select().single()
-    );
-    if (error) return showToast(getErrorMsg(error), 'err');
-    S.transactions.unshift(data);
-    document.getElementById('txConcepto').value = '';
-    document.getElementById('txMonto').value = '';
-    closeTxModal();
-    renderDashboard();
-    showToast(`✅ ${txType==='ingreso'?'Ingreso':'Gasto'} guardado correctamente`, 'ok');
-  } catch(e) {
-    showToast(e.message === 'timeout' ? 'El servidor tardó demasiado. Intenta de nuevo.' : getErrorMsg(e), 'err');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Guardar movimiento';
-  }
+  btn.disabled=true; btn.textContent='Guardando...';
+  const { data, error } = await sb.from('transactions').insert({ business_id:S.activeBizId, user_id:S.user.id, tipo:txType, concepto, monto, categoria, fecha }).select().single();
+  btn.disabled=false; btn.textContent='Guardar movimiento';
+  if (error) return showToast('Error al guardar', 'err');
+  S.transactions.unshift(data);
+  document.getElementById('txConcepto').value='';
+  document.getElementById('txMonto').value='';
+  closeTxModal();
+  renderDashboard();
+  showToast(`✅ ${txType==='ingreso'?'Ingreso':'Gasto'} guardado`, 'ok');
 }
 
 async function deleteTransaction(id) {
@@ -995,26 +874,6 @@ async function deleteTransaction(id) {
 }
 
 // Filters & render
-function getPrevFiltered() {
-  const now = new Date();
-  const txs = S.transactions.filter(t => t.business_id === S.activeBizId || !t.business_id);
-  if (S.period === 'mes') {
-    const prevMonth = new Date(now.getFullYear(), now.getMonth()-1, 1);
-    const ym = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}`;
-    return txs.filter(t => t.fecha.startsWith(ym));
-  } else if (S.period === 'trim') {
-    const q = Math.floor(now.getMonth()/3);
-    const prevQ = q === 0 ? 3 : q-1;
-    const prevYear = q === 0 ? now.getFullYear()-1 : now.getFullYear();
-    const months = [prevQ*3+1, prevQ*3+2, prevQ*3+3].map(m => `${prevYear}-${String(m).padStart(2,'0')}`);
-    return txs.filter(t => months.some(m => t.fecha.startsWith(m)));
-  } else {
-    return txs.filter(t => t.fecha.startsWith(String(now.getFullYear()-1)));
-  }
-}
-
-
-
 function getFiltered() {
   const now = new Date();
   return S.transactions.filter(t => {
@@ -1035,151 +894,18 @@ function renderDashboard() {
   const biz = S.businesses.find(b=>b.id===S.activeBizId);
   document.getElementById('dashTitle').textContent = biz?.name||'Sin negocio';
   document.getElementById('dashSub').textContent = biz?.type||'Crea un negocio para comenzar';
-
-  const filtered = getFiltered();
-  const ing = filtered.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-  const gas = filtered.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
-  const util = ing - gas;
-  const margen = ing > 0 ? ((util/ing)*100).toFixed(1) : 0;
-
-  document.getElementById('kpiIng').textContent = fmt(ing);
-  document.getElementById('kpiGas').textContent = fmt(gas);
-  document.getElementById('kpiUtil').textContent = fmt(util);
-  document.getElementById('kpiUtil').className = 'kpi-value ' + (util>=0?'text-green':'text-red');
-  document.getElementById('kpiMargen').textContent = `Margen: ${margen}%`;
-  document.getElementById('kpiMov').textContent = filtered.length;
-  document.getElementById('kpiMovSub').textContent = `de ${S.transactions.length} totales`;
-
-  // ── DELTAS vs período anterior ──
-  const prevFiltered = getPrevFiltered();
-  const prevIng = prevFiltered.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-  const prevGas = prevFiltered.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
-  const prevUtil = prevIng - prevGas;
-
-  function renderDelta(elId, current, prev) {
-    const el = document.getElementById(elId);
-    if (!el || prev === 0) { if(el) el.innerHTML=''; return; }
-    const pct = ((current - prev) / Math.abs(prev) * 100).toFixed(1);
-    const up = current >= prev;
-    el.innerHTML = `<span style="font-size:0.68rem;font-weight:700;padding:0.12rem 0.4rem;border-radius:4px;background:${up?'var(--green-bg)':'var(--red-bg)'};color:${up?'var(--green)':'var(--red)'}">${up?'↑':'↓'} ${Math.abs(pct)}%</span>`;
-  }
-  renderDelta('kpiIngDelta', ing, prevIng);
-  renderDelta('kpiGasDelta', gas, prevGas);
-  renderDelta('kpiUtilDelta', util, prevUtil);
-
-
-
-  // ── TOP GASTOS (mayores transacciones) ──
-  const topEl = document.getElementById('topGastosList');
-  if (topEl) {
-    const topTxs = filtered.filter(t=>t.tipo==='gasto').sort((a,b)=>b.monto-a.monto).slice(0,5);
-    if (topTxs.length === 0) {
-      topEl.innerHTML = '<div style="color:var(--ink-muted);font-size:0.82rem;padding:0.5rem 0">Sin gastos en este período</div>';
-    } else {
-      const maxMonto = topTxs[0].monto;
-      topEl.innerHTML = topTxs.map((t, i) => {
-        const pct = maxMonto > 0 ? (t.monto/maxMonto*100) : 0;
-        const totalPct = gas > 0 ? (t.monto/gas*100).toFixed(0) : 0;
-        return `<div style="margin-bottom:0.85rem">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem">
-            <div style="min-width:0;flex:1;margin-right:0.5rem">
-              <div style="font-size:0.82rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.concepto}</div>
-              <div style="font-size:0.69rem;color:var(--ink-muted);margin-top:0.1rem">${fmtDate(t.fecha)} · ${CAT_LABELS[t.categoria]||t.categoria||'otro'}</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0">
-              <span style="font-size:0.7rem;color:var(--ink-muted)">${totalPct}%</span>
-              <span style="font-size:0.83rem;font-weight:700;color:var(--red)">${fmt(t.monto)}</span>
-            </div>
-          </div>
-          <div style="height:4px;background:var(--surface2);border-radius:3px;overflow:hidden">
-            <div style="height:100%;width:${pct.toFixed(1)}%;background:var(--red);border-radius:3px;opacity:${0.4 + (0.6 * (1 - i/5))};transition:width 0.4s ease"></div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-  }
-
-  // ── GAUGES DE OBJETIVOS ──
-  const metaIng = parseFloat(localStorage.getItem(`metaIng_${S.activeBizId}`) || '0');
-  const metaGas = parseFloat(localStorage.getItem(`metaGas_${S.activeBizId}`) || '0');
-  const gaugesRow = document.getElementById('gaugesRow');
-
-  if ((metaIng > 0 || metaGas > 0) && S.period === 'mes') {
-    gaugesRow.style.display = 'grid';
-    let gaugesHtml = '';
-    if (metaIng > 0) {
-      const pct = Math.min(100, (ing / metaIng * 100));
-      const color = pct >= 100 ? '#1e7a45' : pct >= 60 ? '#b07d0a' : '#2d6a4f';
-      const remaining = metaIng - ing;
-      gaugesHtml += buildGauge('Meta de ingresos', pct, fmt(ing), fmt(metaIng), color,
-        pct >= 100 ? '✅ ¡Meta alcanzada!' : `Faltan ${fmt(remaining)}`, '#eaf5ee');
-    }
-    if (metaGas > 0) {
-      const pct = Math.min(100, (gas / metaGas * 100));
-      const color = pct >= 90 ? '#c0392b' : pct >= 70 ? '#b07d0a' : '#1e7a45';
-      const remaining = metaGas - gas;
-      gaugesHtml += buildGauge('Límite de gastos', pct, fmt(gas), fmt(metaGas), color,
-        pct >= 100 ? '🚨 Límite superado' : pct >= 90 ? `⚠️ Quedan ${fmt(remaining)}` : `Disponible: ${fmt(remaining)}`,
-        pct >= 90 ? '#fdf0ee' : '#eaf5ee');
-    }
-    gaugesRow.innerHTML = gaugesHtml;
-  } else {
-    gaugesRow.style.display = 'none';
-  }
-
-  renderCharts();
-  renderRecent(filtered);
-}
-
-function buildGauge(title, pct, current, target, color, label, bgColor) {
-  const r = 52;
-  const circ = 2 * Math.PI * r;
-  const dash = (pct / 100) * circ;
-  const gap = circ - dash;
-  return `
-    <div style="background:${bgColor};border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;display:flex;align-items:center;gap:1.25rem">
-      <div style="position:relative;flex-shrink:0;width:120px;height:120px">
-        <svg width="120" height="120" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="${r}" fill="none" stroke="rgba(0,0,0,0.07)" stroke-width="10"/>
-          <circle cx="60" cy="60" r="${r}" fill="none" stroke="${color}" stroke-width="10"
-            stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}"
-            stroke-dashoffset="${(circ * 0.25).toFixed(1)}"
-            stroke-linecap="round"/>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-          <div style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:${color};line-height:1">${pct.toFixed(0)}%</div>
-        </div>
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--ink-muted);margin-bottom:0.4rem">${title}</div>
-        <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--ink);margin-bottom:0.1rem">${current}</div>
-        <div style="font-size:0.75rem;color:var(--ink-muted);margin-bottom:0.65rem">de ${target} objetivo</div>
-        <div style="height:5px;background:rgba(0,0,0,0.07);border-radius:3px;overflow:hidden;margin-bottom:0.5rem">
-          <div style="height:100%;width:${Math.min(100,pct).toFixed(1)}%;background:${color};border-radius:3px;transition:width 0.6s ease"></div>
-        </div>
-        <div style="font-size:0.75rem;font-weight:600;color:${color}">${label}</div>
-      </div>
-    </div>`;
-}
-
-function openMetaModal() {
-  const mIng = localStorage.getItem(`metaIng_${S.activeBizId}`) || '';
-  const mGas = localStorage.getItem(`metaGas_${S.activeBizId}`) || '';
-  document.getElementById('metaIngInput').value = mIng;
-  document.getElementById('metaGasInput').value = mGas;
-  document.getElementById('metaModal').classList.add('show');
-}
-
-function saveMeta() {
-  const ingVal = parseFloat(document.getElementById('metaIngInput').value);
-  const gasVal = parseFloat(document.getElementById('metaGasInput').value);
-  if (ingVal > 0) localStorage.setItem(`metaIng_${S.activeBizId}`, ingVal.toString());
-  else localStorage.removeItem(`metaIng_${S.activeBizId}`);
-  if (gasVal > 0) localStorage.setItem(`metaGas_${S.activeBizId}`, gasVal.toString());
-  else localStorage.removeItem(`metaGas_${S.activeBizId}`);
-  document.getElementById('metaModal').classList.remove('show');
-  showToast('✅ Objetivos guardados', 'ok');
-  renderDashboard();
+  const filtered=getFiltered();
+  const ing=filtered.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const gas=filtered.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+  const util=ing-gas; const margen=ing>0?((util/ing)*100).toFixed(1):0;
+  document.getElementById('kpiIng').textContent=fmt(ing);
+  document.getElementById('kpiGas').textContent=fmt(gas);
+  document.getElementById('kpiUtil').textContent=fmt(util);
+  document.getElementById('kpiUtil').className='kpi-value '+(util>=0?'text-green':'text-red');
+  document.getElementById('kpiMargen').textContent=`Margen: ${margen}%`;
+  document.getElementById('kpiMov').textContent=filtered.length;
+  document.getElementById('kpiMovSub').textContent=`de ${S.transactions.length} totales`;
+  renderCharts(); renderRecent(filtered);
 }
 
 function renderCharts() {
@@ -1195,28 +921,1269 @@ function renderCharts() {
   pieChart=new Chart(document.getElementById('pieChart').getContext('2d'),{type:'doughnut',data:{labels:cats.length?cats.map(c=>CAT_LABELS[c]||c):['Sin gastos'],datasets:[{data:cats.length?cats.map(c=>catMap[c]):[1],backgroundColor:PALETTE.map(c=>c+'cc'),borderColor:PALETTE,borderWidth:1.5,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#8a8270',font:{size:10},padding:8,boxWidth:8}},tooltip:{callbacks:{label:c=>` ${fmt(c.raw)}`}}}}});
 }
 
-function goToHistorial() {
-  const btn = document.querySelector('.nav-item[onclick*="historial"]');
-  if (btn) showPage('historial', btn);
+function renderRecent(filtered) {
+  const recent=[...filtered].slice(0,15);
+  document.getElementById('recentCount').textContent=`${filtered.length} registros`;
+  document.getElementById('recentList').innerHTML=recent.length?recent.map(t=>`<div class="tx-item"><div class="tx-dot" style="background:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}"></div><div class="tx-info"><div class="tx-concepto">${t.concepto}</div><div class="tx-meta">${fmtDate(t.fecha)} · ${CAT_LABELS[t.categoria]||t.categoria||t.tipo}</div></div><div class="tx-amount ${t.tipo}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div><button class="tx-del" onclick="deleteTransaction('${t.id}')">✕</button></div>`).join(''):`<div class="empty"><div class="empty-icon">📝</div><h4>Sin movimientos</h4><p>Registra tu primer ingreso o gasto</p></div>`;
 }
 
-function renderRecent(filtered) {
-  const recent = [...filtered].slice(0, 5);
-  const total = filtered.length;
-  document.getElementById('recentCount').textContent = `${total} registro${total!==1?'s':''}`;
-  const listEl = document.getElementById('recentList');
-  if (!recent.length) {
-    listEl.innerHTML = `<div class="empty"><div class="empty-icon">📝</div><h4>Sin movimientos</h4><p>Registra tu primer ingreso o gasto</p></div>`;
+function renderPL(filterYM=null) {
+  const monthSet=new Set(S.transactions.map(t=>t.fecha.substring(0,7)));
+  const months=[...monthSet].sort(); S.plMonth=filterYM;
+  document.getElementById('monthPills').innerHTML=[`<div class="month-pill ${!filterYM?'active':''}" onclick="renderPL(null)">Todo el año</div>`,...months.map(m=>`<div class="month-pill ${m===filterYM?'active':''}" onclick="renderPL('${m}')">${fmtMonthLabel(m)}</div>`)].join('');
+  const filtered=filterYM?S.transactions.filter(t=>t.fecha.startsWith(filterYM)):S.transactions;
+  const ingTxs=filtered.filter(t=>t.tipo==='ingreso'); const gasTxs=filtered.filter(t=>t.tipo==='gasto');
+  const totalIng=ingTxs.reduce((s,t)=>s+t.monto,0); const totalGas=gasTxs.reduce((s,t)=>s+t.monto,0); const util=totalIng-totalGas;
+  const gasMap={}; gasTxs.forEach(t=>{const k=t.categoria||'otro';gasMap[k]=(gasMap[k]||0)+t.monto;});
+  const ingMap={}; ingTxs.forEach(t=>{const k=t.categoria||'ventas';ingMap[k]=(ingMap[k]||0)+t.monto;});
+  let html='';
+  html+=`<tr class="pl-section"><td colspan="3">📥 INGRESOS</td></tr>`;
+  Object.entries(ingMap).forEach(([k,v])=>{html+=`<tr><td>${CAT_LABELS[k]||k}</td><td class="text-green">${fmt(v)}</td><td>${totalIng>0?((v/totalIng)*100).toFixed(1)+'%':'—'}</td></tr>`;});
+  html+=`<tr class="pl-subtotal"><td><strong>Total Ingresos</strong></td><td class="text-green"><strong>${fmt(totalIng)}</strong></td><td>100%</td></tr>`;
+  html+=`<tr class="pl-section"><td colspan="3">📤 COSTOS Y GASTOS</td></tr>`;
+  Object.entries(gasMap).forEach(([k,v])=>{html+=`<tr><td>${CAT_LABELS[k]||k}</td><td class="text-red">(${fmt(v)})</td><td>${totalIng>0?((v/totalIng)*100).toFixed(1)+'%':'—'}</td></tr>`;});
+  html+=`<tr class="pl-subtotal"><td><strong>Total Gastos</strong></td><td class="text-red"><strong>(${fmt(totalGas)})</strong></td><td>${totalIng>0?((totalGas/totalIng)*100).toFixed(1)+'%':'—'}</td></tr>`;
+  const utilClass=util>=0?'text-green':'text-red'; const margen=totalIng>0?((util/totalIng)*100).toFixed(1)+'%':'—';
+  html+=`<tr class="pl-net" style="background:${util>=0?'var(--green-bg)':'var(--red-bg)'}"><td>📊 UTILIDAD BRUTA</td><td class="${utilClass}">${fmt(util)}</td><td class="${utilClass}">${margen}</td></tr>`;
+  document.getElementById('plBody').innerHTML=html||`<tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--ink-muted)">Sin movimientos</td></tr>`;
+}
+
+function renderHistorial() {
+  const filter=document.getElementById('histFilter')?.value||'todos';
+  let all=[...S.transactions]; if(filter!=='todos')all=all.filter(t=>t.tipo===filter);
+  document.getElementById('histSub').textContent=`${all.length} movimientos`;
+  document.getElementById('histList').innerHTML=all.length?all.map(t=>`<div class="tx-item"><div class="tx-dot" style="background:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}"></div><div class="tx-info"><div class="tx-concepto">${t.concepto}</div><div class="tx-meta">${fmtDate(t.fecha)} · ${CAT_LABELS[t.categoria]||t.categoria||t.tipo}</div></div><div class="tx-amount ${t.tipo}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div><button class="tx-del" onclick="deleteTransaction('${t.id}')">✕</button></div>`).join(''):`<div class="empty"><div class="empty-icon">🧾</div><h4>Sin historial</h4><p>Tus movimientos aparecerán aquí</p></div>`;
+}
+
+function showPage(page,btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active'); btn.classList.add('active');
+  if(page==='pl')renderPL(S.plMonth);
+  if(page==='historial'){renderHistorial();loadImports();}
+  if(page==='reporte')initReportePage();
+
+}
+
+function showToast(msg,type='') { const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast show ${type}`; setTimeout(()=>t.classList.remove('show'),2800); }
+
+
+// ── IMPORT EXCEL ──────────────────────────────────────────────
+let importedRows = [];
+let importColumns = [];
+
+// Load SheetJS dynamically
+function loadSheetJS(cb) {
+  if (window.XLSX) return cb();
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload = cb;
+  document.head.appendChild(s);
+}
+
+// Drag & drop
+document.addEventListener('DOMContentLoaded', () => {
+  const dz = document.getElementById('dropZone');
+  if (!dz) return;
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--accent)'; dz.style.background = 'var(--green-bg)'; });
+  dz.addEventListener('dragleave', () => { dz.style.borderColor = 'var(--border)'; dz.style.background = 'var(--surface2)'; });
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.style.borderColor = 'var(--border)'; dz.style.background = 'var(--surface2)'; handleFile(e.dataTransfer.files[0]); });
+});
+
+function handleFile(file) {
+  if (!file) return;
+  loadSheetJS(() => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+        if (data.length < 2) return showToast('El archivo está vacío', 'err');
+
+        // Find the actual header row — look for a row with 3+ non-empty cells
+        // that doesn't look like a title (titles are usually merged/single cell)
+        let headerRowIdx = 0;
+        for (let i = 0; i < Math.min(10, data.length); i++) {
+          const nonEmpty = data[i].filter(c => c !== '' && c !== null && c !== undefined).length;
+          if (nonEmpty >= 3) { headerRowIdx = i; break; }
+        }
+
+        importColumns = data[headerRowIdx].map((h, i) => String(h||'').trim() || `Columna ${i+1}`);
+        // Only keep rows after header that have at least 2 non-empty cells
+        importedRows = data.slice(headerRowIdx + 1).filter(r => 
+          r.filter(c => c !== '' && c !== null && c !== undefined).length >= 2
+        );
+
+        if (importedRows.length === 0) return showToast('No se encontraron datos en el archivo', 'err');
+
+        renderColumnMapper();
+        renderPreview([data[headerRowIdx], ...data.slice(headerRowIdx+1, headerRowIdx+4)]);
+        document.getElementById('importStep1').style.display = 'none';
+        document.getElementById('importStep2').style.display = 'block';
+      } catch(err) {
+        showToast('Error al leer el archivo: ' + err.message, 'err');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+const IMPORT_FIELDS = [
+  { key: 'fecha', label: '📅 Fecha', required: true, hint: 'Ej: 2024-01-15, 15/01/2024' },
+  { key: 'concepto', label: '📝 Concepto / Descripción', required: true, hint: 'Nombre de la venta o gasto' },
+  { key: 'monto', label: '💰 Monto', required: true, hint: 'El valor numérico' },
+  { key: 'tipo', label: '🔄 Tipo (ingreso/gasto)', required: false, hint: 'Si no lo tienes, puedes asignarlo' },
+  { key: 'categoria', label: '🏷️ Categoría', required: false, hint: 'Opcional' },
+];
+
+function renderColumnMapper() {
+  const opts = ['-- No usar --', ...importColumns].map((c,i) => `<option value="${i-1}">${c}</option>`).join('');
+  document.getElementById('columnMapper').innerHTML = IMPORT_FIELDS.map(f => `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:center;padding:0.75rem;background:var(--surface2);border-radius:8px">
+      <div>
+        <div style="font-weight:600;font-size:0.85rem">${f.label} ${f.required ? '<span style="color:var(--red)">*</span>' : ''}</div>
+        <div style="font-size:0.72rem;color:var(--ink-muted);margin-top:0.15rem">${f.hint}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.4rem">
+        <select id="map_${f.key}" ${f.key==='tipo'?'onchange="toggleTipoDefault()"':''} style="padding:0.5rem 0.75rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.82rem;background:var(--surface);color:var(--ink);outline:none">${opts}</select>
+        ${f.key === 'tipo' ? `<div id="map_tipo_default_wrap" style="margin-top:0.3rem">
+          <div style="font-size:0.7rem;color:var(--ink-muted);margin-bottom:0.3rem">Si no tienes columna de tipo, asigna uno para todos:</div>
+          <select id="map_tipo_default" style="padding:0.5rem 0.75rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:0.82rem;background:var(--surface);color:var(--ink);outline:none;width:100%">
+            <option value="ingreso">Todos son ingresos</option>
+            <option value="gasto">Todos son gastos</option>
+          </select>
+        </div>` : ''}
+      </div>
+    </div>`).join('');
+
+  // Auto-detect columns
+  importColumns.forEach((col, idx) => {
+    const low = col.toLowerCase();
+    if (low.includes('fecha') || low.includes('date')) setMapVal('fecha', idx);
+    if (low.includes('concepto') || low.includes('descripcion') || low.includes('description') || low.includes('detalle')) setMapVal('concepto', idx);
+    if (low.includes('monto') || low.includes('valor') || low.includes('amount') || low.includes('total') || low.includes('precio') || low.includes('venta')) setMapVal('monto', idx);
+    if (low.includes('tipo') || low.includes('type') || low.includes('categoria') || low.includes('category')) setMapVal('tipo', idx);
+  });
+  // Show/hide default tipo selector based on auto-detected columns
+  toggleTipoDefault();
+}
+
+function setMapVal(key, idx) {
+  const el = document.getElementById(`map_${key}`);
+  if (el) el.value = idx;
+}
+
+function toggleTipoDefault() {
+  const tipoSel = document.getElementById('map_tipo');
+  const wrap = document.getElementById('map_tipo_default_wrap');
+  if (!tipoSel || !wrap) return;
+  // If user selected a column (value >= 0), hide the default selector
+  const hasColumn = parseInt(tipoSel.value) >= 0;
+  wrap.style.display = hasColumn ? 'none' : 'block';
+}
+
+function renderPreview(rows) {
+  if (!rows.length) return;
+  const headers = rows[0];
+  const dataRows = rows.slice(1);
+  document.getElementById('previewTable').innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr>${headers.map(h => `<th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);color:var(--ink-muted);white-space:nowrap">${h||'—'}</th>`).join('')}</tr></thead>
+      <tbody>${dataRows.map(r => `<tr>${r.map(c => `<td style="padding:0.35rem 0.6rem;border-bottom:1px solid rgba(226,221,212,0.4);white-space:nowrap">${c||'—'}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>`;
+}
+
+function parseDate(val) {
+  if (!val) return null;
+  if (val instanceof Date) return val.toISOString().split('T')[0];
+  const s = String(val).trim();
+  if (!s || s === '') return null;
+
+  // Already in YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+
+  // DD/MM/YYYY or MM/DD/YYYY
+  const slashMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (slashMatch) {
+    const [_, a, b, y] = slashMatch;
+    // If first number > 12, it must be DD
+    const day = parseInt(a) > 12 ? a : b;
+    const month = parseInt(a) > 12 ? b : a;
+    return `${y}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
+  }
+
+  // DD-MM-YYYY
+  const dashMatch = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+  if (dashMatch) {
+    const [_, d, m, y] = dashMatch;
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+
+  // Try native Date parse
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+
+  return null;
+}
+
+async function runImport() {
+  const fechaIdx = parseInt(document.getElementById('map_fecha').value);
+  const conceptoIdx = parseInt(document.getElementById('map_concepto').value);
+  const montoIdx = parseInt(document.getElementById('map_monto').value);
+  const tipoIdx = parseInt(document.getElementById('map_tipo').value);
+  const catIdx = parseInt(document.getElementById('map_categoria')?.value || -1);
+  const tipoDefault = document.getElementById('map_tipo_default')?.value || 'ingreso';
+
+  if (fechaIdx < 0 || conceptoIdx < 0 || montoIdx < 0) return showToast('Conecta los campos obligatorios (Fecha, Concepto, Monto)', 'err');
+  if (!S.activeBizId) return showToast('Selecciona un negocio primero', 'err');
+
+  const btn = document.querySelector('#importStep2 .btn-submit');
+  btn.disabled = true; btn.textContent = 'Importando...';
+
+  let ok = 0, skip = 0;
+  const batch = [];
+
+  for (const row of importedRows) {
+    const fecha = parseDate(row[fechaIdx]);
+    const concepto = String(row[conceptoIdx] || '').trim();
+    const monto = parseFloat(String(row[montoIdx]).replace(/[,$]/g,''));
+    if (!fecha || !concepto || isNaN(monto) || monto <= 0) { skip++; continue; }
+    let tipo = tipoDefault;
+    if (tipoIdx >= 0 && row[tipoIdx]) {
+      const t = String(row[tipoIdx]).toLowerCase();
+      if (t.includes('gasto') || t.includes('egreso') || t.includes('expense')) tipo = 'gasto';
+      else if (t.includes('ingreso') || t.includes('venta') || t.includes('income')) tipo = 'ingreso';
+    }
+    const categoria = catIdx >= 0 ? String(row[catIdx]||'').toLowerCase().trim() : (tipo === 'ingreso' ? 'ventas' : 'otro');
+    batch.push({ business_id: S.activeBizId, user_id: S.user.id, tipo, concepto, monto, categoria: categoria||'otro', fecha });
+    ok++;
+  }
+
+  if (batch.length > 0) {
+    // 1. Create import record first
+    const filename = document.getElementById('fileInput')?.files?.[0]?.name || 'archivo.xlsx';
+    const { data: importRecord, error: impErr } = await sb.from('imports')
+      .insert({ user_id: S.user.id, business_id: S.activeBizId, filename, record_count: ok })
+      .select().single();
+
+    if (!impErr && importRecord) {
+      // 2. Tag all transactions with import_id
+      batch.forEach(t => t.import_id = importRecord.id);
+    }
+
+    // 3. Insert in chunks of 100
+    for (let i = 0; i < batch.length; i += 100) {
+      await sb.from('transactions').insert(batch.slice(i, i+100));
+    }
+    await loadTransactions();
+  }
+
+  btn.disabled = false;
+  document.getElementById('importStep2').style.display = 'none';
+  document.getElementById('importStep3').style.display = 'block';
+  document.getElementById('importSummary').textContent = `Se importaron ${ok} movimientos correctamente.${skip > 0 ? ` Se omitieron ${skip} filas con datos incompletos.` : ''}`;
+  renderDashboard();
+}
+
+function resetImport() {
+  importedRows = []; importColumns = [];
+  document.getElementById('fileInput').value = '';
+  document.getElementById('importStep1').style.display = 'block';
+  document.getElementById('importStep2').style.display = 'none';
+  document.getElementById('importStep3').style.display = 'none';
+}
+
+function goToDashboard() {
+  resetImport();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-dashboard').classList.add('active');
+  document.querySelector('.nav-item').classList.add('active');
+}
+
+
+
+// ── INSIGHTS AUTOMÁTICOS ──────────────────────────────────────────
+function generarInsights() {
+  if (S.transactions.length === 0) return showToast('Primero registra algunos movimientos', 'err');
+
+  document.getElementById('insightsEmpty').style.display = 'none';
+  document.getElementById('insightsResult').style.display = 'none';
+  document.getElementById('insightsLoading').style.display = 'block';
+  document.getElementById('btnAnalizar').disabled = true;
+
+  setTimeout(() => {
+    const insights = calcularInsights();
+    renderInsights(insights);
+    document.getElementById('insightsLoading').style.display = 'none';
+    document.getElementById('insightsResult').style.display = 'block';
+    document.getElementById('btnAnalizar').disabled = false;
+  }, 800);
+}
+
+function calcularInsights() {
+  const txs = S.transactions;
+  const ing = txs.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const gas = txs.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+  const util = ing - gas;
+  const margen = ing > 0 ? (util/ing*100) : 0;
+
+  // Monthly breakdown
+  const monthly = {};
+  txs.forEach(t => {
+    const ym = t.fecha.substring(0,7);
+    if (!monthly[ym]) monthly[ym] = {ing:0, gas:0, label:ym};
+    monthly[ym][t.tipo==='ingreso'?'ing':'gas'] += t.monto;
+  });
+  const months = Object.entries(monthly).sort();
+  const lastMonth = months[months.length-1]?.[1];
+  const prevMonth = months[months.length-2]?.[1];
+
+  // Categories
+  const cats = {};
+  txs.filter(t=>t.tipo==='gasto').forEach(t => {
+    const k = t.categoria||'otro';
+    cats[k] = (cats[k]||0) + t.monto;
+  });
+  const topCats = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const topCat = topCats[0];
+  const top3pct = topCats.slice(0,3).reduce((s,[,v])=>s+v,0) / (gas||1) * 100;
+
+  // Best month
+  const bestMonth = months.reduce((best, [m,v]) => v.ing > (best?.[1]?.ing||0) ? [m,v] : best, null);
+
+  // Growth
+  let ingGrowth = null;
+  if (lastMonth && prevMonth && prevMonth.ing > 0) {
+    ingGrowth = ((lastMonth.ing - prevMonth.ing) / prevMonth.ing) * 100;
+  }
+  let gasGrowth = null;
+  if (lastMonth && prevMonth && prevMonth.gas > 0) {
+    gasGrowth = ((lastMonth.gas - prevMonth.gas) / prevMonth.gas) * 100;
+  }
+
+  const insights = [];
+
+  // 1. Margen
+  if (margen >= 30) {
+    insights.push({ tipo:'positivo', icono:'🏆', titulo:'Margen de utilidad saludable', descripcion:`Tu margen de utilidad es del ${margen.toFixed(1)}%, lo que significa que por cada $100 que ingresas, te quedan $${margen.toFixed(0)} de ganancia. Esto es un indicador muy positivo para tu negocio.`, recomendacion:'Mantén controlados tus gastos principales para sostener este margen.' });
+  } else if (margen >= 15) {
+    insights.push({ tipo:'neutro', icono:'📊', titulo:'Margen de utilidad moderado', descripcion:`Tu margen de utilidad es del ${margen.toFixed(1)}%. Por cada $100 que ingresas, te quedan $${margen.toFixed(0)} de ganancia. Hay espacio para mejorar.`, recomendacion:'Revisa tus 3 categorías de gasto más grandes y busca reducirlas un 10%.' });
+  } else if (margen > 0) {
+    insights.push({ tipo:'alerta', icono:'⚠️', titulo:'Margen de utilidad bajo', descripcion:`Tu margen es del ${margen.toFixed(1)}%, lo que deja poco espacio ante cualquier imprevisto. Tus gastos representan el ${(100-margen).toFixed(1)}% de tus ingresos.`, recomendacion:'Identifica gastos no esenciales que puedas reducir o eliminar este mes.' });
+  } else {
+    insights.push({ tipo:'negativo', icono:'🚨', titulo:'Gastos mayores que ingresos', descripcion:`Tus gastos (${fmt(gas)}) superan tus ingresos (${fmt(ing)}) por ${fmt(Math.abs(util))}. Es importante atender esto de inmediato.`, recomendacion:'Haz una revisión urgente de gastos y enfócate en aumentar ingresos este mes.' });
+  }
+
+  // 2. Crecimiento de ingresos
+  if (ingGrowth !== null) {
+    if (ingGrowth > 10) {
+      insights.push({ tipo:'positivo', icono:'📈', titulo:'Ingresos en crecimiento', descripcion:`Tus ingresos crecieron un ${ingGrowth.toFixed(1)}% comparado con el mes anterior (de ${fmt(prevMonth.ing)} a ${fmt(lastMonth.ing)}). Tu negocio va en la dirección correcta.`, recomendacion:'Identifica qué acciones generaron este crecimiento y repítelas.' });
+    } else if (ingGrowth < -10) {
+      insights.push({ tipo:'alerta', icono:'📉', titulo:'Caída en ingresos este mes', descripcion:`Tus ingresos bajaron un ${Math.abs(ingGrowth).toFixed(1)}% respecto al mes anterior (de ${fmt(prevMonth.ing)} a ${fmt(lastMonth.ing)}). Vale la pena revisar qué pasó.`, recomendacion:'Analiza si fue una temporada baja o si hay una causa específica que atender.' });
+    }
+  }
+
+  // 3. Gastos creciendo más que ingresos
+  if (gasGrowth !== null && ingGrowth !== null && gasGrowth > ingGrowth + 5) {
+    insights.push({ tipo:'alerta', icono:'🔔', titulo:'Gastos crecen más rápido que ingresos', descripcion:`Tus gastos aumentaron ${gasGrowth.toFixed(1)}% mientras tus ingresos solo crecieron ${ingGrowth.toFixed(1)}%. Si esta tendencia continúa, tu margen se reducirá.`, recomendacion:'Revisa qué categoría de gasto creció más y evalúa si es necesario.' });
+  }
+
+  // 4. Categoría dominante
+  if (topCat && gas > 0) {
+    const pct = (topCat[1]/gas*100);
+    const label = CAT_LABELS[topCat[0]] || topCat[0];
+    if (pct > 40) {
+      insights.push({ tipo:'neutro', icono:'🔍', titulo:`${label} domina tus gastos`, descripcion:`El ${pct.toFixed(0)}% de todos tus gastos corresponde a ${label} (${fmt(topCat[1])}). Concentrar tanto gasto en una sola categoría puede ser un riesgo.`, recomendacion:`Evalúa si puedes negociar mejores condiciones o reducir costos en ${label}.` });
+    } else {
+      insights.push({ tipo:'positivo', icono:'⚖️', titulo:'Gastos bien distribuidos', descripcion:`Tu categoría más grande es ${label} con el ${pct.toFixed(0)}% del gasto total (${fmt(topCat[1])}). Tus gastos están relativamente diversificados.`, recomendacion:'Mantén este balance y revisa mensualmente que ninguna categoría crezca desproporcionadamente.' });
+    }
+  }
+
+  // 5. Mejor mes
+  if (bestMonth) {
+    const [bm, bv] = bestMonth;
+    insights.push({ tipo:'positivo', icono:'🌟', titulo:`Tu mejor mes fue ${bm}`, descripcion:`En ${bm} lograste ${fmt(bv.ing)} en ingresos, tu mejor marca histórica. La utilidad ese mes fue de ${fmt(bv.ing - bv.gas)}.`, recomendacion:'Analiza qué hiciste diferente ese mes y replica esas acciones.' });
+  }
+
+  // 6. Concentración de gastos en top 3
+  if (topCats.length >= 3 && gas > 0) {
+    insights.push({ tipo:'neutro', icono:'📦', titulo:'Top 3 categorías concentran gastos', descripcion:`Tus 3 principales categorías de gasto (${topCats.slice(0,3).map(([k])=>CAT_LABELS[k]||k).join(', ')}) representan el ${top3pct.toFixed(0)}% de todos tus gastos.`, recomendacion:'Enfoca tu atención en estas 3 categorías para tener el mayor impacto en reducción de costos.' });
+  }
+
+  return insights.slice(0, 6);
+}
+
+function renderInsights(insights) {
+  const txs = S.transactions;
+  const ing = txs.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const gas = txs.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+  const util = ing - gas;
+  const margen = ing > 0 ? (util/ing*100) : 0;
+
+  // KPIs
+  document.getElementById('insightKpis').innerHTML = [
+    {label:'Ingresos', val:fmt(ing), color:'var(--green)', icon:'💰'},
+    {label:'Gastos', val:fmt(gas), color:'var(--red)', icon:'📤'},
+    {label:'Utilidad', val:fmt(util), color:util>=0?'var(--green)':'var(--red)', icon:'📈'},
+    {label:'Margen', val:margen.toFixed(1)+'%', color:'var(--gold)', icon:'🎯'},
+  ].map(k=>`
+    <div class="kpi-card">
+      <div class="kpi-top"><div class="kpi-label">${k.label}</div><div class="kpi-icon">${k.icon}</div></div>
+      <div class="kpi-value" style="color:${k.color}">${k.val}</div>
+    </div>`).join('');
+
+  // Cards
+  const colorMap = {
+    positivo:{bg:'var(--green-bg)',border:'#a8d5b5',badge:'#1e7a45',label:'✅ Positivo'},
+    negativo:{bg:'var(--red-bg)',border:'#f0b8b0',badge:'var(--red)',label:'⚠️ Atención'},
+    alerta:{bg:'var(--gold-bg)',border:'#f0d890',badge:'var(--gold)',label:'🔔 Alerta'},
+    neutro:{bg:'var(--blue-bg)',border:'#b0c8f0',badge:'var(--blue)',label:'💡 Dato'},
+  };
+
+  document.getElementById('insightCards').innerHTML = insights.map(ins => {
+    const c = colorMap[ins.tipo] || colorMap.neutro;
+    return `
+      <div style="background:${c.bg};border:1.5px solid ${c.border};border-radius:14px;padding:1.25rem">
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.75rem">
+          <span style="font-size:1.6rem">${ins.icono}</span>
+          <div>
+            <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${c.badge};margin-bottom:0.15rem">${c.label}</div>
+            <div style="font-weight:700;font-size:0.92rem;line-height:1.3">${ins.titulo}</div>
+          </div>
+        </div>
+        <div style="font-size:0.82rem;color:var(--ink);line-height:1.6;margin-bottom:0.75rem">${ins.descripcion}</div>
+        <div style="font-size:0.78rem;padding:0.5rem 0.75rem;background:rgba(255,255,255,0.6);border-radius:8px;color:var(--ink-muted);line-height:1.5">
+          <strong>💡 Recomendación:</strong> ${ins.recomendacion}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+
+// ── FORECAST ──────────────────────────────────────────
+let forecastChartInstance = null;
+
+function generarForecast() {
+  const txs = S.transactions;
+  if (txs.length === 0) return showToast('Primero registra algunos movimientos', 'err');
+
+  // Build monthly data
+  const monthly = {};
+  txs.forEach(t => {
+    const ym = t.fecha.substring(0,7);
+    if (!monthly[ym]) monthly[ym] = {ing:0, gas:0};
+    monthly[ym][t.tipo==='ingreso'?'ing':'gas'] += t.monto;
+  });
+  const months = Object.entries(monthly).sort();
+
+  if (months.length < 2) {
+    showToast('Necesitas al menos 2 meses de datos para el forecast', 'err');
     return;
   }
-  listEl.innerHTML = recent.map(t =>
-    `<div class="tx-item"><div class="tx-dot" style="background:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}"></div><div class="tx-info"><div class="tx-concepto">${t.concepto}</div><div class="tx-meta">${fmtDate(t.fecha)} · ${CAT_LABELS[t.categoria]||t.categoria||t.tipo}</div></div><div class="tx-amount ${t.tipo}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div></div>`
-  ).join('');
-  if (total > 5) {
-    listEl.innerHTML += `<div style="text-align:center;padding:0.75rem 0;border-top:1px solid var(--border);margin-top:0.4rem">
-      <button onclick="goToHistorial()" style="background:none;border:none;font-family:'Instrument Sans',sans-serif;font-size:0.8rem;color:var(--accent);cursor:pointer;font-weight:600">Ver todos los movimientos →</button>
-    </div>`;
-  }
+
+  document.getElementById('forecastEmpty').style.display = 'none';
+  document.getElementById('forecastResult').style.display = 'none';
+  document.getElementById('forecastLoading').style.display = 'block';
+  document.getElementById('btnForecast').disabled = true;
+
+  setTimeout(() => {
+    // Exponential smoothing α=0.4 — optimal for volatile small business data
+    // More recent months get exponentially more weight
+    const ALPHA = 0.4;
+    const n = months.length;
+    const ingValues = months.map(([,v]) => v.ing);
+    const gasValues = months.map(([,v]) => v.gas);
+
+    function expSmoothedGrowth(values) {
+      if (values.length < 2) return 0;
+      // Calculate month-over-month growth rates
+      const rates = [];
+      for (let i = 1; i < values.length; i++) {
+        if (values[i-1] > 0) rates.push((values[i] - values[i-1]) / values[i-1]);
+        else rates.push(0);
+      }
+      // Apply exponential smoothing: recent rates have exponentially more weight
+      let smoothed = rates[0];
+      for (let i = 1; i < rates.length; i++) {
+        smoothed = ALPHA * rates[i] + (1 - ALPHA) * smoothed;
+      }
+      // Cap between -30% and +30%
+      return Math.max(-0.30, Math.min(0.30, smoothed));
+    }
+
+    const ingGrowth = expSmoothedGrowth(ingValues);
+    const gasGrowth = expSmoothedGrowth(gasValues);
+
+    // Store for investment simulator
+    window._forecastData = { months, ingGrowth, gasGrowth, ingValues, gasValues };
+
+    // Last known values
+    const lastIng = ingValues[n-1];
+    const lastGas = gasValues[n-1];
+
+    // Generate next 3 months
+    const lastMonthStr = months[n-1][0];
+    const [lastYear, lastMon] = lastMonthStr.split('-').map(Number);
+
+    const projections = [];
+    for (let i = 1; i <= 3; i++) {
+      let m = lastMon + i, y = lastYear;
+      if (m > 12) { m -= 12; y++; }
+      const label = `${y}-${String(m).padStart(2,'0')}`;
+      const projIng = lastIng * Math.pow(1 + ingGrowth, i);
+      const projGas = lastGas * Math.pow(1 + gasGrowth, i);
+      projections.push({ label, ing: Math.max(0, projIng), gas: Math.max(0, projGas) });
+    }
+
+    // Render alert if gastos growing faster than ingresos
+    const alertEl = document.getElementById('forecastAlert');
+    if (gasGrowth > ingGrowth + 0.05) {
+      const monthsToBreakeven = Math.ceil(Math.log(lastIng/lastGas) / Math.log((1+gasGrowth)/(1+ingGrowth)));
+      alertEl.style.display = 'block';
+      alertEl.innerHTML = `
+        <div style="background:var(--gold-bg);border:1.5px solid #f0d890;border-radius:12px;padding:1rem 1.25rem;display:flex;gap:0.75rem;align-items:center">
+          <span style="font-size:1.5rem">⚠️</span>
+          <div style="font-size:0.83rem;line-height:1.6">
+            <strong>Tus gastos están creciendo más rápido que tus ingresos.</strong> 
+            Si esta tendencia continúa, tus gastos podrían superar tus ingresos en aproximadamente <strong>${monthsToBreakeven > 0 && monthsToBreakeven < 24 ? monthsToBreakeven + ' meses' : 'los próximos meses'}</strong>.
+            Te recomendamos revisar tus gastos principales.
+          </div>
+        </div>`;
+    } else {
+      alertEl.style.display = 'none';
+    }
+
+    // Render forecast cards
+    document.getElementById('forecastCards').innerHTML = projections.map((p, i) => {
+      const util = p.ing - p.gas;
+      const margen = p.ing > 0 ? (util/p.ing*100) : 0;
+      const nombres = ['Próximo mes','En 2 meses','En 3 meses'];
+      return `
+        <div class="card" style="border-top:3px solid ${util>=0?'var(--green)':'var(--red)'}">
+          <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-muted);margin-bottom:0.3rem">${nombres[i]}</div>
+          <div style="font-size:0.95rem;font-weight:700;color:var(--ink-muted);margin-bottom:0.9rem">${p.label}</div>
+          <div style="display:flex;flex-direction:column;gap:0.45rem">
+            <div style="display:flex;justify-content:space-between;font-size:0.82rem">
+              <span style="color:var(--ink-muted)">💰 Ingresos est.</span>
+              <span style="color:var(--green);font-weight:600">${fmt(p.ing)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.82rem">
+              <span style="color:var(--ink-muted)">📤 Gastos est.</span>
+              <span style="color:var(--red);font-weight:600">${fmt(p.gas)}</span>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:0.45rem;display:flex;justify-content:space-between;font-size:0.85rem">
+              <span style="font-weight:600">Utilidad est.</span>
+              <span style="font-weight:700;color:${util>=0?'var(--green)':'var(--red)'}">${fmt(util)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem">
+              <span style="color:var(--ink-muted)">Margen</span>
+              <span style="color:var(--gold);font-weight:600">${margen.toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Render table
+    const allRows = [
+      ...months.map(([m,v]) => ({label:m, ing:v.ing, gas:v.gas, tipo:'real'})),
+      ...projections.map(p => ({label:p.label, ing:p.ing, gas:p.gas, tipo:'estimado'}))
+    ];
+    document.getElementById('forecastTable').innerHTML = allRows.map(r => {
+      const util = r.ing - r.gas;
+      const isProj = r.tipo === 'estimado';
+      return `<tr style="border-bottom:1px solid var(--border);${isProj?'background:var(--surface2);font-style:italic':''}">
+        <td style="padding:0.5rem 0.75rem;font-weight:500">${r.label}</td>
+        <td style="padding:0.5rem 0.75rem;text-align:right;color:var(--green)">${fmt(r.ing)}</td>
+        <td style="padding:0.5rem 0.75rem;text-align:right;color:var(--red)">${fmt(r.gas)}</td>
+        <td style="padding:0.5rem 0.75rem;text-align:right;font-weight:600;color:${util>=0?'var(--green)':'var(--red)'}">${fmt(util)}</td>
+        <td style="padding:0.5rem 0.75rem;text-align:center">
+          <span style="font-size:0.7rem;padding:0.2rem 0.5rem;border-radius:20px;background:${isProj?'var(--gold-bg)':'var(--green-bg)'};color:${isProj?'var(--gold)':'var(--green)'};font-weight:600">${isProj?'📊 Estimado':'✅ Real'}</span>
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Render chart
+    const chartLabels = allRows.map(r => r.label);
+    const chartIng = allRows.map(r => Math.round(r.ing));
+    const chartGas = allRows.map(r => Math.round(r.gas));
+    const isProj = allRows.map(r => r.tipo === 'estimado');
+
+    if (forecastChartInstance) forecastChartInstance.destroy();
+    const ctx = document.getElementById('forecastChart').getContext('2d');
+    forecastChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: chartLabels,
+        datasets: [
+          {
+            label: 'Ingresos',
+            data: chartIng,
+            backgroundColor: chartLabels.map((_,i) => isProj[i] ? 'rgba(30,122,69,0.35)' : 'rgba(30,122,69,0.85)'),
+            borderColor: 'rgba(30,122,69,1)',
+            borderWidth: isProj.map(p => p ? 2 : 0),
+            borderDash: [4,4],
+          },
+          {
+            label: 'Gastos',
+            data: chartGas,
+            backgroundColor: chartLabels.map((_,i) => isProj[i] ? 'rgba(192,57,43,0.25)' : 'rgba(192,57,43,0.75)'),
+            borderColor: 'rgba(192,57,43,1)',
+            borderWidth: isProj.map(p => p ? 2 : 0),
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { font: { family: 'Instrument Sans' } } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $${ctx.raw.toLocaleString('es-MX')}` } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { family: 'Instrument Sans', size: 11 } } },
+          y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { family: 'Instrument Sans', size: 11 }, callback: v => '$' + (v/1000).toFixed(0) + 'k' } }
+        }
+      }
+    });
+
+    document.getElementById('forecastLoading').style.display = 'none';
+    document.getElementById('forecastResult').style.display = 'block';
+    document.getElementById('btnForecast').disabled = false;
+  }, 600);
 }
 
+// ── IMPORTS HISTORY ──────────────────────────────────────────
+async function loadImports() {
+  const el = document.getElementById('importsList');
+  if (!el) return;
+  const { data, error } = await sb.from('imports')
+    .select('*')
+    .eq('business_id', S.activeBizId)
+    .order('created_at', { ascending: false });
 
+  if (error || !data || data.length === 0) {
+    el.innerHTML = '<div style="color:var(--ink-muted);font-size:0.83rem;padding:0.5rem 0">No hay importaciones registradas para este negocio.</div>';
+    return;
+  }
+
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:0.5rem 0.75rem;color:var(--ink-muted);font-weight:600">Archivo</th>
+          <th style="text-align:center;padding:0.5rem 0.75rem;color:var(--ink-muted);font-weight:600">Registros</th>
+          <th style="text-align:left;padding:0.5rem 0.75rem;color:var(--ink-muted);font-weight:600">Fecha</th>
+          <th style="text-align:center;padding:0.5rem 0.75rem;color:var(--ink-muted);font-weight:600">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map(imp => `
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:0.6rem 0.75rem">
+              <div style="font-weight:500">📊 ${imp.filename||'archivo.xlsx'}</div>
+            </td>
+            <td style="padding:0.6rem 0.75rem;text-align:center">
+              <span style="background:var(--blue-bg);color:var(--blue);padding:0.2rem 0.6rem;border-radius:20px;font-size:0.75rem;font-weight:600">${imp.record_count} registros</span>
+            </td>
+            <td style="padding:0.6rem 0.75rem;color:var(--ink-muted);font-size:0.8rem">
+              ${new Date(imp.created_at).toLocaleDateString('es-MX', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+            </td>
+            <td style="padding:0.6rem 0.75rem;text-align:center">
+              <button onclick="deleteImport('${imp.id}', '${(imp.filename||'archivo').replace(/'/g,'')}', ${imp.record_count})"
+                style="padding:0.3rem 0.75rem;border:1.5px solid var(--red);border-radius:7px;background:transparent;color:var(--red);font-family:'Instrument Sans',sans-serif;font-size:0.75rem;cursor:pointer;transition:all 0.15s"
+                onmouseover="this.style.background='var(--red-bg)'" onmouseout="this.style.background='transparent'">
+                🗑️ Borrar importación
+              </button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function deleteImport(importId, filename, count) {
+  if (!confirm(`¿Borrar la importación "${filename}" y sus ${count} registros?\n\nEsta acción no se puede deshacer.`)) return;
+
+  // Delete all transactions linked to this import
+  const { error: txErr } = await sb.from('transactions')
+    .delete()
+    .eq('import_id', importId)
+    .eq('user_id', S.user.id);
+
+  if (txErr) return showToast('Error al borrar los registros', 'err');
+
+  // Delete import record
+  await sb.from('imports').delete().eq('id', importId);
+
+  showToast(`✅ Importación "${filename}" borrada`, 'ok');
+  await loadTransactions();
+  renderHistorial();
+  renderDashboard();
+  loadImports();
+}
+
+// ── REPORTE PDF ──────────────────────────────────────────
+let logoDataUrl = null;
+let firmaDataUrl = null;
+
+function handleLogoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    logoDataUrl = e.target.result;
+    document.getElementById('logoPreview').src = logoDataUrl;
+    document.getElementById('logoPreviewWrap').style.display = 'block';
+    document.getElementById('logoPlaceholder').style.display = 'none';
+    document.getElementById('logoName').style.display = 'block';
+    document.getElementById('logoName').textContent = '✅ ' + file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleFirmaUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    firmaDataUrl = e.target.result;
+    document.getElementById('firmaPreview').src = firmaDataUrl;
+    document.getElementById('firmaPreviewWrap').style.display = 'block';
+    document.getElementById('firmaPlaceholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function initReportePage() {
+  const txs = S.transactions;
+  const years = [...new Set(txs.map(t => t.fecha.substring(0,4)))].sort().reverse();
+  const currentYear = new Date().getFullYear().toString();
+  if (!years.includes(currentYear)) years.unshift(currentYear);
+  const sel = document.getElementById('rptAnio');
+  sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  const now = new Date();
+  document.getElementById('rptMes').value = String(now.getMonth()+1).padStart(2,'0');
+  updateRptPreview();
+}
+
+function getRptRange() {
+  const periodo = document.getElementById('rptPeriodo').value;
+  const anio = document.getElementById('rptAnio')?.value || new Date().getFullYear().toString();
+  const mes = document.getElementById('rptMes')?.value || '01';
+  const mesGroup = document.getElementById('rptMesGroup');
+  const MNAMES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const m = parseInt(mes), y = parseInt(anio);
+  let start, end, label;
+  if (periodo === 'mensual') {
+    mesGroup.style.display = 'block';
+    start = end = `${anio}-${mes}`;
+    label = `${MNAMES[m]} ${anio}`;
+  } else if (periodo === 'trimestral') {
+    mesGroup.style.display = 'block';
+    const q = Math.ceil(m/3);
+    start = `${anio}-${String((q-1)*3+1).padStart(2,'0')}`;
+    end = `${anio}-${String(q*3).padStart(2,'0')}`;
+    label = `Q${q} ${anio}`;
+  } else if (periodo === 'semestral') {
+    mesGroup.style.display = 'block';
+    const half = m <= 6 ? 1 : 2;
+    start = `${anio}-${half===1?'01':'07'}`;
+    end = `${anio}-${half===1?'06':'12'}`;
+    label = `${half===1?'Primer':'Segundo'} semestre ${anio}`;
+  } else {
+    mesGroup.style.display = 'none';
+    start = `${anio}-01`; end = `${anio}-12`;
+    label = `Año ${anio}`;
+  }
+  return { start, end, label, periodo };
+}
+
+function filterTxsByRange(start, end) {
+  return S.transactions.filter(t => { const ym = t.fecha.substring(0,7); return ym >= start && ym <= end; });
+}
+
+function getPrevRange(start, end, periodo) {
+  const [sy, sm] = start.split('-').map(Number);
+  const mCount = {'mensual':1,'trimestral':3,'semestral':6,'anual':12}[periodo]||1;
+  let pm = sm - mCount, py = sy;
+  if (pm <= 0) { pm += 12; py--; }
+  const pStart = `${py}-${String(pm).padStart(2,'0')}`;
+  const [ey, em] = end.split('-').map(Number);
+  let pem = em - mCount, pey = ey;
+  if (pem <= 0) { pem += 12; pey--; }
+  const pEnd = `${pey}-${String(pem).padStart(2,'0')}`;
+  return { start: pStart, end: pEnd };
+}
+
+function buildNarrative(txs, prevTxs, label, periodo, bizName) {
+  const ing = txs.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const gas = txs.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+  const util = ing - gas;
+  const margen = ing > 0 ? (util/ing*100) : 0;
+  const pIng = prevTxs.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const pGas = prevTxs.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+  const pUtil = pIng - pGas;
+
+  const ingVar = pIng > 0 ? ((ing-pIng)/pIng*100) : null;
+  const gasVar = pGas > 0 ? ((gas-pGas)/pGas*100) : null;
+  const utilVar = pUtil !== 0 ? ((util-pUtil)/Math.abs(pUtil)*100) : null;
+
+  const cats = {};
+  txs.filter(t=>t.tipo==='gasto').forEach(t => { const k=t.categoria||'otro'; cats[k]=(cats[k]||0)+t.monto; });
+  const topGastos = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  const monthly = {};
+  txs.forEach(t => { const ym=t.fecha.substring(0,7); if(!monthly[ym])monthly[ym]={ing:0,gas:0}; monthly[ym][t.tipo==='ingreso'?'ing':'gas']+=t.monto; });
+  const months = Object.entries(monthly).sort();
+  const bestMonth = months.reduce((b,m) => m[1].ing>(b?.[1]?.ing||0)?m:b, null);
+
+  // YTD
+  const anio = label.match(/\d{4}/)?.[0];
+  const ytdTxs = anio ? S.transactions.filter(t=>t.fecha.startsWith(anio)) : txs;
+  const ytdIng = ytdTxs.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const ytdGas = ytdTxs.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+
+  const lines = [];
+  const pLabel = {'mensual':'mes anterior','trimestral':'trimestre anterior','semestral':'semestre anterior','anual':'año anterior'}[periodo]||'período anterior';
+
+  // Opening
+  lines.push(`Durante el período correspondiente a ${label}, ${bizName} registró ingresos brutos por ${fmt(ing)} y gastos operativos por ${fmt(gas)}, resultando en una utilidad bruta de ${fmt(util)}, equivalente a un margen del ${margen.toFixed(1)}%.`);
+
+  // Ingresos vs prev
+  if (ingVar !== null) {
+    if (ingVar > 0) lines.push(`Los ingresos presentaron un incremento del ${ingVar.toFixed(1)}% respecto al ${pLabel} (${fmt(pIng)}), lo que refleja un desempeño positivo en la generación de ventas y servicios.`);
+    else if (ingVar < -5) lines.push(`Los ingresos registraron una disminución del ${Math.abs(ingVar).toFixed(1)}% en comparación con el ${pLabel} (${fmt(pIng)}). Se recomienda analizar las causas de esta variación.`);
+    else lines.push(`Los ingresos se mantuvieron estables respecto al ${pLabel} (${fmt(pIng)}), con una variación de ${ingVar.toFixed(1)}%.`);
+  }
+
+  // Gastos vs prev
+  if (gasVar !== null) {
+    if (gasVar > 10) lines.push(`Los gastos operativos aumentaron un ${gasVar.toFixed(1)}% frente al ${pLabel} (${fmt(pGas)}). Este incremento merece atención para evitar una contracción del margen.`);
+    else if (gasVar < -5) lines.push(`Los gastos operativos se redujeron un ${Math.abs(gasVar).toFixed(1)}% respecto al ${pLabel} (${fmt(pGas)}), contribuyendo positivamente a la utilidad del período.`);
+    else lines.push(`Los gastos operativos se mantuvieron en niveles similares al ${pLabel} (${fmt(pGas)}), con una variación de ${gasVar.toFixed(1)}%.`);
+  }
+
+  // Top gastos
+  if (topGastos.length > 0) {
+    const topStr = topGastos.map(([k,v]) => `${CAT_LABELS[k]||k} (${fmt(v)}, ${gas>0?(v/gas*100).toFixed(0):'0'}% del total)`).join(', ');
+    lines.push(`Las categorías de gasto más significativas durante el período fueron: ${topStr}.`);
+  }
+
+  // Mejor mes
+  if (bestMonth && months.length > 1) {
+    const MMAP = {'01':'enero','02':'febrero','03':'marzo','04':'abril','05':'mayo','06':'junio','07':'julio','08':'agosto','09':'septiembre','10':'octubre','11':'noviembre','12':'diciembre'};
+    const [bYear, bMon] = bestMonth[0].split('-');
+    lines.push(`El mejor mes en términos de ingresos fue ${MMAP[bMon]||bMon} de ${bYear}, con ${fmt(bestMonth[1].ing)} en ingresos y una utilidad de ${fmt(bestMonth[1].ing-bestMonth[1].gas)}.`);
+  }
+
+  // YTD (only if not annual)
+  if (periodo !== 'anual' && anio) {
+    lines.push(`En términos acumulados al cierre del período (YTD ${anio}), el negocio ha generado ingresos totales de ${fmt(ytdIng)} y gastos de ${fmt(ytdGas)}, con una utilidad bruta acumulada de ${fmt(ytdIng-ytdGas)}.`);
+  }
+
+  // Utilidad conclusion
+  if (margen >= 40) lines.push(`El margen bruto del ${margen.toFixed(1)}% se considera sólido para la operación del negocio, indicando una buena capacidad de generación de utilidades antes de deducciones fiscales y financieras.`);
+  else if (margen >= 20) lines.push(`El margen bruto del ${margen.toFixed(1)}% es moderado. Se recomienda revisar las principales partidas de gasto para identificar oportunidades de mejora en la rentabilidad.`);
+  else if (margen > 0) lines.push(`El margen bruto del ${margen.toFixed(1)}% es bajo. Es prioritario revisar la estructura de costos y explorar alternativas para incrementar los ingresos o reducir gastos.`);
+  else lines.push(`El negocio registró pérdida bruta en el período. Se requiere atención urgente en la gestión de gastos y estrategias de incremento de ingresos.`);
+
+  lines.push(`Nota: La utilidad presentada corresponde a utilidad bruta. No incluye intereses, impuestos, depreciaciones ni amortizaciones (EBITDA). Para el cálculo de utilidad neta se requiere información fiscal adicional.`);
+
+  return { lines, ing, gas, util, margen, ingVar, gasVar, topGastos, ytdIng, ytdGas };
+}
+
+function updateRptPreview() {
+  const { start, end, label, periodo } = getRptRange();
+  const txs = filterTxsByRange(start, end);
+  const prev = getPrevRange(start, end, periodo);
+  const prevTxs = filterTxsByRange(prev.start, prev.end);
+  const biz = S.businesses.find(b=>b.id===S.activeBizId);
+  const { lines, ing, gas, util, margen } = buildNarrative(txs, prevTxs, label, periodo, biz?.name||'el negocio');
+
+  document.getElementById('rptPreview').innerHTML = `
+    <div style="background:var(--surface2);border-radius:10px;padding:1.25rem;margin-bottom:1rem">
+      <div style="font-weight:700;font-size:0.92rem;margin-bottom:1rem;color:var(--ink)">${biz?.name||'Negocio'} — ${label}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem">
+        <div style="background:var(--green-bg);border-radius:7px;padding:0.6rem 0.8rem"><div style="font-size:0.68rem;color:var(--ink-muted)">Ingresos</div><div style="font-weight:700;color:var(--green);font-size:0.9rem">${fmt(ing)}</div></div>
+        <div style="background:var(--red-bg);border-radius:7px;padding:0.6rem 0.8rem"><div style="font-size:0.68rem;color:var(--ink-muted)">Gastos</div><div style="font-weight:700;color:var(--red);font-size:0.9rem">${fmt(gas)}</div></div>
+        <div style="background:var(--gold-bg);border-radius:7px;padding:0.6rem 0.8rem"><div style="font-size:0.68rem;color:var(--ink-muted)">Util. Bruta</div><div style="font-weight:700;color:${util>=0?'var(--green)':'var(--red)'};font-size:0.9rem">${fmt(util)}</div></div>
+        <div style="background:var(--blue-bg);border-radius:7px;padding:0.6rem 0.8rem"><div style="font-size:0.68rem;color:var(--ink-muted)">Margen</div><div style="font-weight:700;color:var(--blue);font-size:0.9rem">${margen.toFixed(1)}%</div></div>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted);margin-bottom:0.6rem">Vista previa del análisis narrativo</div>
+      ${lines.slice(0,3).map(l => `<div style="font-size:0.78rem;color:var(--ink);line-height:1.65;margin-bottom:0.5rem;padding-left:0.75rem;border-left:2px solid var(--border)">${l}</div>`).join('')}
+      ${lines.length > 3 ? `<div style="font-size:0.75rem;color:var(--ink-muted);margin-top:0.5rem">+ ${lines.length-3} párrafos más en el PDF completo</div>` : ''}
+    </div>`;
+}
+
+async function generarPDF() {
+  let attempts = 0;
+  while (!window.jspdf?.jsPDF && attempts < 20) { await new Promise(r => setTimeout(r, 250)); attempts++; }
+  const { jsPDF } = window.jspdf || {};
+  if (!jsPDF) return showToast('Error al cargar el generador de PDF. Recarga la página.', 'err');
+
+  const btn = document.getElementById('btnPDF');
+  btn.disabled = true; btn.textContent = '⏳ Generando...';
+
+  const { start, end, label, periodo } = getRptRange();
+  const txs = filterTxsByRange(start, end);
+  const prev = getPrevRange(start, end, periodo);
+  const prevTxs = filterTxsByRange(prev.start, prev.end);
+  const biz = S.businesses.find(b=>b.id===S.activeBizId);
+  const para = document.getElementById('rptPara').value.trim();
+  const dueno = document.getElementById('rptDueno').value.trim();
+  const nota = document.getElementById('rptNota').value.trim();
+  const hoy = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+
+  const { lines, ing, gas, util, margen, ingVar, gasVar, topGastos, ytdIng, ytdGas } = buildNarrative(txs, prevTxs, label, periodo, biz?.name||'el negocio');
+
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W=210, M=20;
+  let y = 0;
+
+  const C = {
+    dark:[28,26,23], green:[30,122,69], red:[192,57,43], gold:[176,125,10],
+    blue:[26,74,138], bg:[248,246,241], border:[226,221,212], muted:[138,130,112], white:[255,255,255]
+  };
+
+  function addPage() {
+    doc.addPage(); y = M;
+    doc.setFillColor(...C.bg); doc.rect(0,0,W,10,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+    doc.setTextColor(...C.muted);
+    doc.text(biz?.name||'Negocio', M, 7);
+    doc.text(`Reporte ${label}  ·  ContaFácil`, W-M, 7, {align:'right'});
+    doc.setDrawColor(...C.border); doc.setLineWidth(0.3); doc.line(0,10,W,10);
+    y = 20;
+  }
+
+  function writeText(text, fontSize, color, opts={}) {
+    doc.setFontSize(fontSize); doc.setTextColor(...color);
+    const lines = doc.splitTextToSize(text, opts.maxWidth || W-M*2);
+    doc.text(lines, opts.x||M, y, opts);
+    y += lines.length * (fontSize * 0.42) + (opts.after||3);
+  }
+
+  function hline(color=C.border, width=0.3) {
+    doc.setDrawColor(...color); doc.setLineWidth(width); doc.line(M, y, W-M, y); y += 4;
+  }
+
+  function checkY(needed=20) { if (y + needed > 272) addPage(); }
+
+  // ── PAGE 1: PORTADA ──
+  doc.setFillColor(...C.dark); doc.rect(0,0,W,297,'F');
+  doc.setFillColor(...C.green); doc.rect(0,0,5,297,'F');
+
+  // Logo
+  if (logoDataUrl) {
+    try { doc.addImage(logoDataUrl, 'PNG', M+5, 35, 45, 25, '', 'FAST'); } catch(e) {}
+    y = 68;
+  } else {
+    y = 45;
+  }
+
+  // Business name
+  doc.setFont('helvetica','bold'); doc.setFontSize(30);
+  doc.setTextColor(...C.white);
+  doc.text(biz?.name||'Mi Negocio', M+5, y); y += 12;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(12);
+  doc.setTextColor(160,210,175);
+  doc.text('REPORTE FINANCIERO EJECUTIVO', M+5, y); y += 8;
+
+  doc.setFontSize(10); doc.setTextColor(...C.muted);
+  doc.text(`Período: ${label}`, M+5, y); y += 6;
+  doc.text(`Fecha de emisión: ${hoy}`, M+5, y); y += 20;
+
+  // KPI boxes
+  const kpis = [
+    {l:'INGRESOS', v:fmt(ing), c:C.green},
+    {l:'GASTOS', v:fmt(gas), c:C.red},
+    {l:'UTIL. BRUTA', v:fmt(util), c:util>=0?C.green:C.red},
+    {l:'MARGEN', v:margen.toFixed(1)+'%', c:C.gold},
+  ];
+  kpis.forEach((k,i) => {
+    const kx=M+5+(i%2)*90, ky=y+Math.floor(i/2)*30;
+    doc.setFillColor(40,38,35); doc.rect(kx,ky,84,24,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.setTextColor(...C.muted); doc.text(k.l, kx+5, ky+8);
+    doc.setFont('helvetica','bold'); doc.setFontSize(13);
+    doc.setTextColor(...k.c); doc.text(k.v, kx+5, ky+18);
+  });
+  y += 70;
+
+  if (para) {
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    doc.setTextColor(...C.muted); doc.text('PREPARADO PARA', M+5, y); y += 6;
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.setTextColor(...C.white); doc.text(para, M+5, y); y += 12;
+  }
+
+  if (nota) {
+    doc.setFont('helvetica','italic'); doc.setFontSize(8.5);
+    doc.setTextColor(...C.muted);
+    const notaLines = doc.splitTextToSize(nota, W-M*2-10);
+    doc.text(notaLines, M+5, y); y += notaLines.length * 4 + 6;
+  }
+
+  // Footer portada
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+  doc.setTextColor(70,68,65);
+  doc.text(`Generado el ${hoy} con ContaFácil`, M+5, 285);
+  doc.text('Este reporte presenta utilidad bruta. No incluye impuestos, intereses ni deducciones fiscales.', M+5, 290, {maxWidth:W-M*2-10});
+
+  // ── PAGE 2: CARTA EJECUTIVA ──
+  addPage();
+  doc.setFont('helvetica','bold'); doc.setFontSize(15);
+  doc.setTextColor(...C.dark);
+  doc.text('Análisis Ejecutivo del Período', M, y); y += 8;
+  hline(C.green, 0.8);
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+  doc.setTextColor(...C.muted);
+  doc.text(`${biz?.name||'Negocio'}  ·  ${label}  ·  Emitido: ${hoy}`, M, y); y += 10;
+
+  lines.forEach((line, i) => {
+    checkY(18);
+    doc.setFont('helvetica', i===lines.length-1 ? 'italic' : 'normal');
+    doc.setFontSize(i===lines.length-1 ? 8 : 9);
+    doc.setTextColor(...(i===lines.length-1 ? C.muted : C.dark));
+    const wrapped = doc.splitTextToSize(line, W-M*2);
+    doc.text(wrapped, M, y);
+    y += wrapped.length * (i===lines.length-1 ? 3.8 : 4.2) + 4;
+  });
+
+  // ── PAGE 3: ANÁLISIS NUMÉRICO ──
+  addPage();
+  doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.setTextColor(...C.dark);
+  doc.text('Resultados del Período', M, y); y += 6;
+  hline(C.green, 0.6);
+
+  // Comparison vs prev
+  if (ingVar !== null || gasVar !== null) {
+    checkY(30);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+    doc.setTextColor(...C.dark);
+    doc.text('Comparativo vs período anterior', M, y); y += 6;
+    const compRows = [];
+    if (ingVar!==null) compRows.push(['Ingresos', fmt(ing), ingVar>=0?`+${ingVar.toFixed(1)}%`:`${ingVar.toFixed(1)}%`, ingVar>=0?'▲':'▼']);
+    if (gasVar!==null) compRows.push(['Gastos', fmt(gas), gasVar>=0?`+${gasVar.toFixed(1)}%`:`${gasVar.toFixed(1)}%`, gasVar>=0?'▲':'▼']);
+    const uVar = pUtil => pUtil!==0?((util-pUtil)/Math.abs(pUtil)*100):null;
+    const pUtil = prevTxs.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0) - prevTxs.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+t.monto,0);
+    const uv = pUtil!==0?((util-pUtil)/Math.abs(pUtil)*100):null;
+    if (uv!==null) compRows.push(['Util. Bruta', fmt(util), uv>=0?`+${uv.toFixed(1)}%`:`${uv.toFixed(1)}%`, uv>=0?'▲':'▼']);
+    compRows.push(['Margen', margen.toFixed(1)+'%', '', '']);
+    doc.autoTable({ head:[['Concepto','Período actual','Var. %','Tend.']], body:compRows, startY:y, margin:{left:M,right:M}, styles:{fontSize:8.5,cellPadding:2.5}, headStyles:{fillColor:C.dark,textColor:C.white,fontStyle:'bold'}, columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'center'}}, theme:'striped' });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // YTD
+  checkY(25);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+  doc.setTextColor(...C.dark);
+  doc.text('Acumulado del año (YTD)', M, y); y += 6;
+  const anio = label.match(/\d{4}/)?.[0] || new Date().getFullYear().toString();
+  doc.autoTable({
+    head:[['Concepto','Acumulado YTD']], startY:y, margin:{left:M,right:M},
+    body:[['Ingresos acumulados', fmt(ytdIng)],['Gastos acumulados', fmt(ytdGas)],['Utilidad bruta acumulada', fmt(ytdIng-ytdGas)],['Margen YTD', ytdIng>0?((ytdIng-ytdGas)/ytdIng*100).toFixed(1)+'%':'—']],
+    styles:{fontSize:8.5,cellPadding:2.5}, headStyles:{fillColor:C.dark,textColor:C.white,fontStyle:'bold'}, columnStyles:{1:{halign:'right'}}, theme:'striped'
+  });
+  y = doc.lastAutoTable.finalY + 10;
+
+  // Top gastos
+  if (topGastos.length > 0) {
+    checkY(25);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+    doc.setTextColor(...C.dark);
+    doc.text('Gastos más recurrentes por categoría', M, y); y += 6;
+    doc.autoTable({
+      head:[['Categoría','Importe','% del total']], startY:y, margin:{left:M,right:M},
+      body: topGastos.map(([k,v]) => [CAT_LABELS[k]||k, fmt(v), gas>0?(v/gas*100).toFixed(1)+'%':'—']),
+      styles:{fontSize:8.5,cellPadding:2.5}, headStyles:{fillColor:C.dark,textColor:C.white,fontStyle:'bold'}, columnStyles:{1:{halign:'right'},2:{halign:'right'}}, theme:'striped'
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // ── PAGE 4: ESTADO DE RESULTADOS ──
+  addPage();
+  doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.setTextColor(...C.dark);
+  doc.text('Estado de Resultados', M, y); y += 6;
+  hline(C.green, 0.6);
+
+  const catsPL = {};
+  txs.forEach(t => { if(!catsPL[t.tipo])catsPL[t.tipo]={}; const k=t.categoria||'otro'; catsPL[t.tipo][k]=(catsPL[t.tipo][k]||0)+t.monto; });
+  const plRows = [];
+  plRows.push([{content:'INGRESOS',colSpan:3,styles:{fillColor:C.green,textColor:C.white,fontStyle:'bold',fontSize:8}}]);
+  Object.entries(catsPL.ingreso||{}).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => plRows.push([CAT_LABELS[k]||k, fmt(v), ing>0?(v/ing*100).toFixed(1)+'%':'—']));
+  plRows.push([{content:'Total Ingresos',styles:{fontStyle:'bold'}},{content:fmt(ing),styles:{fontStyle:'bold',textColor:C.green}},'100%']);
+  plRows.push([{content:'COSTOS Y GASTOS',colSpan:3,styles:{fillColor:C.red,textColor:C.white,fontStyle:'bold',fontSize:8}}]);
+  Object.entries(catsPL.gasto||{}).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => plRows.push([CAT_LABELS[k]||k, `(${fmt(v)})`, ing>0?(v/ing*100).toFixed(1)+'%':'—']));
+  plRows.push([{content:'Total Gastos',styles:{fontStyle:'bold'}},{content:`(${fmt(gas)})`,styles:{fontStyle:'bold',textColor:C.red}}, ing>0?(gas/ing*100).toFixed(1)+'%':'—']);
+  plRows.push([{content:'UTILIDAD BRUTA',styles:{fontStyle:'bold',fillColor:[240,237,230]}},{content:fmt(util),styles:{fontStyle:'bold',textColor:util>=0?C.green:C.red,fillColor:[240,237,230]}},{content:margen.toFixed(1)+'%',styles:{fontStyle:'bold',fillColor:[240,237,230]}}]);
+
+  doc.autoTable({ head:[['Concepto','Importe','% Ingresos']], body:plRows, startY:y, margin:{left:M,right:M}, styles:{fontSize:8.5,cellPadding:2.5}, headStyles:{fillColor:C.dark,textColor:C.white,fontStyle:'bold'}, columnStyles:{1:{halign:'right'},2:{halign:'right',cellWidth:22}}, theme:'grid' });
+  y = doc.lastAutoTable.finalY + 10;
+
+  // Comparativo mensual
+  checkY(20);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+  doc.setTextColor(...C.dark);
+  doc.text('Comportamiento histórico mensual', M, y); y += 6;
+  const monthly2 = {};
+  txs.forEach(t => { const ym=t.fecha.substring(0,7); if(!monthly2[ym])monthly2[ym]={ing:0,gas:0}; monthly2[ym][t.tipo==='ingreso'?'ing':'gas']+=t.monto; });
+  const MMAP2 = {'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'};
+  const mensualRows = Object.entries(monthly2).sort().map(([m,v]) => { const u=v.ing-v.gas; return [`${MMAP2[m.split('-')[1]]||m} ${m.split('-')[0]}`, fmt(v.ing), fmt(v.gas), fmt(u), v.ing>0?(u/v.ing*100).toFixed(1)+'%':'—']; });
+  doc.autoTable({ head:[['Mes','Ingresos','Gastos','Util. Bruta','Margen']], body:mensualRows, startY:y, margin:{left:M,right:M}, styles:{fontSize:8.5,cellPadding:2.5}, headStyles:{fillColor:C.dark,textColor:C.white,fontStyle:'bold'}, columnStyles:{1:{halign:'right',textColor:C.green},2:{halign:'right',textColor:C.red},3:{halign:'right'},4:{halign:'right'}}, theme:'striped' });
+  y = doc.lastAutoTable.finalY + 10;
+
+  // ── PÁGINA FINAL: FIRMA ──
+  addPage();
+  doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.setTextColor(...C.dark);
+  doc.text('Declaración y Firma', M, y); y += 6;
+  hline(C.green, 0.6);
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.setTextColor(...C.dark);
+  const declaracion = `El suscrito declara que la información financiera contenida en el presente reporte corresponde a los registros internos de ${biz?.name||'el negocio'} para el período ${label}, y que ha sido preparada de buena fe con base en los datos disponibles al momento de su emisión. La utilidad presentada es utilidad bruta y no considera efectos fiscales, financieros ni contables adicionales.`;
+  const declWrapped = doc.splitTextToSize(declaracion, W-M*2);
+  doc.text(declWrapped, M, y);
+  y += declWrapped.length * 4.2 + 15;
+
+  // Firma image
+  if (firmaDataUrl) {
+    try {
+      doc.addImage(firmaDataUrl, 'PNG', M, y, 50, 20, '', 'FAST');
+      y += 24;
+    } catch(e) {}
+  } else {
+    doc.setDrawColor(...C.border); doc.setLineWidth(0.3);
+    doc.line(M, y+15, M+70, y+15);
+    y += 20;
+  }
+
+  // Name and date
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+  doc.setTextColor(...C.dark);
+  doc.text(dueno || '________________________________', M, y); y += 5;
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.setTextColor(...C.muted);
+  doc.text(dueno ? 'Nombre del responsable' : 'Nombre del responsable', M, y); y += 10;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.setTextColor(...C.dark);
+  doc.text(`Fecha: ${hoy}`, M, y); y += 5;
+  doc.text(`Lugar: ________________________________`, M, y); y += 15;
+
+  // Footer note
+  doc.setFont('helvetica','italic'); doc.setFontSize(7.5);
+  doc.setTextColor(...C.muted);
+  doc.text('Este documento fue generado digitalmente por ContaFácil. La utilidad bruta presentada no incluye impuestos,', M, y, {maxWidth:W-M*2}); y += 4;
+  doc.text('intereses, depreciaciones ni amortizaciones. Para efectos fiscales, consulte a su contador certificado.', M, y, {maxWidth:W-M*2});
+
+  // Page numbers
+  const pageCount = doc.getNumberOfPages();
+  for (let i=2; i<=pageCount; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.setTextColor(...C.muted);
+    doc.text(`Página ${i-1} de ${pageCount-1}`, W/2, 291, {align:'center'});
+  }
+
+  const fname = `reporte_ejecutivo_${(biz?.name||'negocio').replace(/\s+/g,'_')}_${label.replace(/\s+/g,'_')}.pdf`;
+  doc.save(fname);
+  btn.disabled = false; btn.textContent = '📄 Generar y descargar PDF';
+  showToast('✅ PDF descargado exitosamente', 'ok');
+}
+
+// ── SIMULADOR DE INVERSIÓN ──────────────────────────────────────────
+function simularInversion() {
+  const monto = parseFloat(document.getElementById('invMonto').value);
+  const mes = parseInt(document.getElementById('invMes').value);
+  const crecEsperado = parseFloat(document.getElementById('invCrecimiento').value) / 100;
+
+  if (!monto || monto <= 0) return showToast('Ingresa el monto de inversión', 'err');
+  if (isNaN(crecEsperado) || crecEsperado <= 0) return showToast('Ingresa el crecimiento esperado en ingresos (%)', 'err');
+
+  const fd = window._forecastData;
+  if (!fd) return showToast('Primero genera el forecast', 'err');
+
+  const { months, ingGrowth, gasGrowth, ingValues } = fd;
+  const lastIng = ingValues[ingValues.length - 1];
+  const lastGas = fd.gasValues[fd.gasValues.length - 1];
+  const lastMonthStr = months[months.length - 1][0];
+  const [lastYear, lastMon] = lastMonthStr.split('-').map(Number);
+
+  // Build 3 scenarios: conservador (historial), moderado (punto medio), optimista (esperado)
+  const scenarios = [
+    { nombre: '📉 Conservador', desc: 'Tu tendencia actual sin inversión', growthExtra: 0, color: '#457b9d', bgColor: 'var(--blue-bg)' },
+    { nombre: '📊 Moderado', desc: 'Punto medio entre tendencia y tu expectativa', growthExtra: crecEsperado / 2, color: '#b07d0a', bgColor: 'var(--gold-bg)' },
+    { nombre: '📈 Optimista', desc: `Tu expectativa de +${(crecEsperado*100).toFixed(0)}% en ingresos`, growthExtra: crecEsperado, color: '#1e7a45', bgColor: 'var(--green-bg)' },
+  ];
+
+  // Sanity check — if expectation is far from history, show warning
+  const histGrowthPct = (ingGrowth * 100).toFixed(1);
+  const espPct = (crecEsperado * 100).toFixed(0);
+  const farFromHistory = crecEsperado > ingGrowth * 3 && crecEsperado > 0.15;
+
+  let html = '';
+
+  if (farFromHistory) {
+    html += `<div style="background:var(--gold-bg);border:1.5px solid #f0d890;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1rem;font-size:0.8rem;line-height:1.6">
+      ⚠️ <strong>Tu expectativa (${espPct}%) es muy superior a tu crecimiento histórico (${histGrowthPct}%).</strong> 
+      Esto puede ser posible con una buena inversión, pero es importante tenerlo en cuenta. 
+      Los 3 escenarios abajo te muestran el rango realista.
+    </div>`;
+  }
+
+  html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.85rem;margin-bottom:1rem">`;
+
+  scenarios.forEach(sc => {
+    let totalUtil = 0;
+    for (let i = 1; i <= 3; i++) {
+      const projIng = lastIng * Math.pow(1 + ingGrowth + (i >= mes ? sc.growthExtra : 0), i);
+      const extraGas = i === mes ? monto : 0;
+      const projGas = lastGas * Math.pow(1 + gasGrowth, i) + extraGas;
+      totalUtil += projIng - projGas;
+    }
+    const roi = monto > 0 ? ((totalUtil / monto - 1) * 100) : 0;
+
+    // Month by month
+    const rows = [];
+    for (let i = 1; i <= 3; i++) {
+      let m = lastMon + i, y = lastYear;
+      if (m > 12) { m -= 12; y++; }
+      const label = `${y}-${String(m).padStart(2,'0')}`;
+      const projIng = lastIng * Math.pow(1 + ingGrowth + (i >= mes ? sc.growthExtra : 0), i);
+      const extraGas = i === mes ? monto : 0;
+      const projGas = lastGas * Math.pow(1 + gasGrowth, i) + extraGas;
+      const util = projIng - projGas;
+      rows.push({ label, ing: projIng, gas: projGas, util });
+    }
+
+    html += `<div style="background:${sc.bgColor};border:1.5px solid rgba(0,0,0,0.08);border-radius:12px;padding:1rem">
+      <div style="font-weight:700;font-size:0.88rem;color:${sc.color};margin-bottom:0.25rem">${sc.nombre}</div>
+      <div style="font-size:0.72rem;color:var(--ink-muted);margin-bottom:0.85rem">${sc.desc}</div>
+      ${rows.map(r => `
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:0.3rem">
+          <span style="color:var(--ink-muted)">${r.label}</span>
+          <span style="font-weight:600;color:${r.util>=0?'var(--green)':'var(--red)'}">${fmt(r.util)}</span>
+        </div>`).join('')}
+      <div style="border-top:1px solid rgba(0,0,0,0.1);margin-top:0.6rem;padding-top:0.6rem;display:flex;justify-content:space-between;font-size:0.78rem">
+        <span style="font-weight:600">Utilidad 3 meses</span>
+        <span style="font-weight:700;color:${totalUtil>=0?'var(--green)':'var(--red)'}">${fmt(totalUtil)}</span>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  html += `<div style="font-size:0.75rem;color:var(--ink-muted);text-align:center">La inversión de ${fmt(monto)} se aplica como gasto en el mes seleccionado. Los ingresos adicionales se proyectan a partir de ese mes.</div>`;
+
+  document.getElementById('invResult').style.display = 'block';
+  document.getElementById('invResult').innerHTML = html;
+}
+
+init();
+</script>
+</body>
+</html>
